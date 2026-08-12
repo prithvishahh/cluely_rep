@@ -11,21 +11,43 @@ const promptEl = document.getElementById("prompt") as HTMLInputElement;
 const sendEl = document.getElementById("send") as HTMLButtonElement;
 const modeHintEl = document.getElementById("modeHint") as HTMLElement;
 
-async function ask(prompt: string): Promise<void> {
+let cancelCurrent: (() => void) | null = null;
+
+function ask(prompt: string): void {
   const q = prompt.trim();
   if (!q) return;
 
+  // Cancel any generation still in flight.
+  cancelCurrent?.();
+
   answerEl.classList.add("thinking");
   answerEl.textContent = "thinking…";
+  let first = true;
 
-  try {
-    const answer = await window.cluely.ask(q);
-    answerEl.classList.remove("thinking");
-    answerEl.textContent = answer;
-  } catch (err) {
-    answerEl.classList.remove("thinking");
-    answerEl.textContent = `error: ${(err as Error).message}`;
-  }
+  cancelCurrent = window.cluely.ask(q, {
+    onToken: (token) => {
+      if (first) {
+        answerEl.classList.remove("thinking");
+        answerEl.textContent = "";
+        first = false;
+      }
+      answerEl.textContent += token;
+      answerEl.scrollTop = answerEl.scrollHeight;
+    },
+    onDone: () => {
+      cancelCurrent = null;
+      if (first) {
+        // Stream ended with no tokens.
+        answerEl.classList.remove("thinking");
+        answerEl.textContent = "(no response)";
+      }
+    },
+    onError: (message) => {
+      cancelCurrent = null;
+      answerEl.classList.remove("thinking");
+      answerEl.textContent = message;
+    },
+  });
 }
 
 sendEl.addEventListener("click", () => ask(promptEl.value));

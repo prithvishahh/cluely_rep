@@ -6,6 +6,7 @@ import {
   screen,
 } from "electron";
 import path from "node:path";
+import { streamAnswer } from "./llm";
 
 const isDev = process.argv.includes("--dev");
 
@@ -106,15 +107,34 @@ function registerShortcuts(): void {
   });
 }
 
-// A stubbed "answer" for Milestone 1. Milestone 2 replaces this with a
-// local model (Ollama / whisper.cpp) call; a later milestone swaps in an API.
-ipcMain.handle("llm:ask", async (_evt, prompt: string) => {
-  await new Promise((r) => setTimeout(r, 400));
-  return (
-    `⟨stub answer — no model wired yet⟩\n\n` +
-    `You asked: "${prompt}"\n\n` +
-    `Milestone 2 will route this to a local model and stream tokens here.`
-  );
+// ── Answer layer (Milestone 2). ──────────────────────────────────────────
+// Streams tokens from a local model. Each request carries an id so the
+// renderer can correlate tokens and cancel in-flight generations.
+const inflight = new Map<string, AbortController>();
+
+ipcMain.on("llm:ask", async (evt, req: { id: string; prompt: string }) => {
+  const { id, prompt } = req;
+  const controller = new AbortController();
+  inflight.set(id, controller);
+  try {
+    for await (const token of streamAnswer(prompt, { signal: controller.signal })) {
+      if (evt.sender.isDestroyed()) break;
+      evt.sender.send("llm:token", { id, token });
+    }
+    if (!evt.sender.isDestroyed()) evt.sender.send("llm:done", { id });
+  } catch (err) {
+    if ((err as Error)?.name === "AbortError") return;
+    if (!evt.sender.isDestroyed()) {
+      evt.sender.send("llm:error", { id, message: (err as Error).message });
+    }
+  } finally {
+    inflight.delete(id);
+  }
+});
+
+ipcMain.on("llm:cancel", (_evt, req: { id: string }) => {
+  inflight.get(req.id)?.abort();
+  inflight.delete(req.id);
 });
 
 app.whenReady().then(() => {

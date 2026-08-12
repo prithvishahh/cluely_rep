@@ -81,8 +81,9 @@ Milestones:
   click-through window with `setContentProtection`; global hotkeys; stubbed
   answer round-trip. *Verify invisibility on a real Zoom share before anything
   else.*
-- [ ] **M2 — Local LLM answers.** Wire `llm:ask` to Ollama; stream tokens into
-  the overlay.
+- [x] **M2 — Local LLM answers.** `llm:ask` streams tokens from Ollama
+  (`/api/chat`, NDJSON) into the overlay, with request-id correlation,
+  cancellation, and friendly errors when Ollama/the model is missing.
 - [ ] **M3 — Mic capture + streaming STT** (whisper.cpp) with a rolling
   transcript.
 - [ ] **M4 — System/loopback audio** (the hard, platform-specific part).

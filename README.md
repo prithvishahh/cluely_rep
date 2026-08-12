@@ -8,9 +8,10 @@ This is a learning/side project. It is built in the open to understand the
 engineering behind the product (audio capture, streaming transcription, screen
 OCR, low-latency LLM answers, and OS-level window exclusion).
 
-> **Status: Milestone 1 — the invisible overlay shell.**
-> The answer layer is stubbed; audio and OCR are not wired yet. See
-> [`docs/RESEARCH.md`](docs/RESEARCH.md) for the full research brief and roadmap.
+> **Status: Milestone 2 — local LLM answers.**
+> The overlay streams answers from a local model (Ollama). Audio capture and
+> screen OCR are not wired yet. See [`docs/RESEARCH.md`](docs/RESEARCH.md) for
+> the full research brief and roadmap.
 
 ## Stack (current)
 
@@ -28,10 +29,29 @@ OCR, low-latency LLM answers, and OS-level window exclusion).
 Requires Node 18+. **The invisibility only takes effect on macOS and Windows**
 (it's a no-op on Linux), so test the screen-share behaviour on a Mac.
 
+The answer layer uses a **local model via [Ollama](https://ollama.com)**. Install
+it, then pull a small model once:
+
+```bash
+ollama pull llama3.2      # default; any chat model works
+```
+
+Then run the app (Ollama's background server is used automatically):
+
 ```bash
 npm install
 npm start
 ```
+
+Configure via env vars if you like:
+
+| Var | Default | Meaning |
+|---|---|---|
+| `CLUELY_MODEL` | `llama3.2` | Ollama model name |
+| `OLLAMA_URL` | `http://127.0.0.1:11434` | Ollama server URL |
+
+If Ollama isn't running or the model isn't pulled, the overlay shows the exact
+command to fix it.
 
 ## Shortcuts
 
