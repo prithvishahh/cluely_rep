@@ -10,6 +10,8 @@ const answerEl = document.getElementById("answer") as HTMLElement;
 const promptEl = document.getElementById("prompt") as HTMLInputElement;
 const sendEl = document.getElementById("send") as HTMLButtonElement;
 const modeHintEl = document.getElementById("modeHint") as HTMLElement;
+const transcriptEl = document.getElementById("transcript") as HTMLElement;
+const audioDot = document.getElementById("audioDot") as HTMLElement;
 
 let cancelCurrent: (() => void) | null = null;
 
@@ -63,4 +65,26 @@ window.cluely.onAsk(() => ask(promptEl.value || "Summarize what's on screen."));
 window.cluely.onClickThroughChanged((clickThrough) => {
   modeHintEl.textContent = clickThrough ? "click-through" : "interactive";
   if (!clickThrough) promptEl.focus();
+});
+
+// Live transcript from meeting audio.
+const MAX_SEGMENTS = 12;
+window.cluely.onTranscriptSegment((text) => {
+  transcriptEl.hidden = false;
+  const seg = document.createElement("div");
+  seg.className = "seg";
+  seg.textContent = text;
+  transcriptEl.appendChild(seg);
+  while (transcriptEl.childElementCount > MAX_SEGMENTS) {
+    transcriptEl.firstElementChild?.remove();
+  }
+  transcriptEl.scrollTop = transcriptEl.scrollHeight;
+});
+
+// Audio pipeline status → the header dot + tooltip.
+window.cluely.onAudioStatus((status) => {
+  audioDot.classList.toggle("live", status.active);
+  audioDot.title = status.active
+    ? "transcribing live audio"
+    : `transcription off — ${status.reason ?? "unavailable"}`;
 });

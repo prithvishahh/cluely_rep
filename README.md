@@ -8,10 +8,12 @@ This is a learning/side project. It is built in the open to understand the
 engineering behind the product (audio capture, streaming transcription, screen
 OCR, low-latency LLM answers, and OS-level window exclusion).
 
-> **Status: Milestone 2 — local LLM answers.**
-> The overlay streams answers from a local model (Ollama). Audio capture and
-> screen OCR are not wired yet. See [`docs/RESEARCH.md`](docs/RESEARCH.md) for
-> the full research brief and roadmap.
+> **Status: Milestone 3 — live meeting transcription (macOS).**
+> System audio is captured natively (ScreenCaptureKit) and transcribed locally
+> (whisper.cpp); recent transcript is fed to the model as context. Screen OCR
+> is next. The app **degrades gracefully** — without the native pieces built it
+> still runs as the invisible overlay + local LLM. See
+> [`docs/RESEARCH.md`](docs/RESEARCH.md) for the full research brief and roadmap.
 
 ## Stack (current)
 
@@ -52,6 +54,40 @@ Configure via env vars if you like:
 
 If Ollama isn't running or the model isn't pulled, the overlay shows the exact
 command to fix it.
+
+### Live transcription (macOS, optional)
+
+To have the overlay hear the meeting, build the native audio helper and point
+it at a local whisper.cpp model. **Without these steps the app still runs** —
+the header dot stays grey and transcription is simply off.
+
+1. **Build the ScreenCaptureKit audio helper** (macOS 13+, Xcode CLT):
+   ```bash
+   ./scripts/build-native.sh
+   ```
+   First run prompts for **Screen Recording** permission — grant it and restart.
+
+2. **Build whisper.cpp and download a model:**
+   ```bash
+   git clone https://github.com/ggerganov/whisper.cpp && cd whisper.cpp
+   cmake -B build && cmake --build build -j --config Release
+   ./models/download-ggml-model.sh base.en
+   ```
+
+3. **Point the app at them** (e.g. in your shell before `npm start`):
+   ```bash
+   export WHISPER_CLI=/path/to/whisper.cpp/build/bin/whisper-cli
+   export WHISPER_MODEL=/path/to/whisper.cpp/models/ggml-base.en.bin
+   ```
+
+   | Var | Default | Meaning |
+   |---|---|---|
+   | `WHISPER_CLI` | `whisper-cli` (PATH) | whisper.cpp CLI binary |
+   | `WHISPER_MODEL` | *(unset)* | path to a ggml `.bin` model |
+   | `AUDIOCAP_BIN` | `native/audiocap/audiocap` | audio helper binary |
+   | `CLUELY_STT_WINDOW_MS` | `5000` | transcription window size |
+
+The header dot turns **green** when transcription is live; hover it for status.
 
 ## Shortcuts
 

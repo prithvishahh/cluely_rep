@@ -84,9 +84,13 @@ Milestones:
 - [x] **M2 — Local LLM answers.** `llm:ask` streams tokens from Ollama
   (`/api/chat`, NDJSON) into the overlay, with request-id correlation,
   cancellation, and friendly errors when Ollama/the model is missing.
-- [ ] **M3 — Mic capture + streaming STT** (whisper.cpp) with a rolling
-  transcript.
-- [ ] **M4 — System/loopback audio** (the hard, platform-specific part).
+- [x] **M3 — System audio + local STT.** Native ScreenCaptureKit helper
+  (`native/audiocap/main.swift`) streams 16 kHz mono PCM → whisper.cpp windowed
+  transcription (`transcriber.ts`) → rolling transcript fed to the LLM as
+  context. Degrades gracefully when native pieces aren't built. *Native code is
+  unverified on Linux — compile/test on macOS.*
+- [ ] **M4 — Cross-platform audio.** Windows WASAPI loopback; refine macOS
+  (VAD/streaming, mic + system mix).
 - [ ] **M5 — Screen OCR** so answers can use on-screen content.
 - [ ] **M6 — Canned actions + knowledge upload/grounding.**
 - [ ] **Pivot decision — native rewrite** (remind owner).

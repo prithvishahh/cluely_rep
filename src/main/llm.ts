@@ -14,6 +14,8 @@ const SYSTEM_PROMPT =
 
 export interface AskOptions {
   signal?: AbortSignal;
+  /** Recent live meeting transcript, prepended as context when present. */
+  transcript?: string;
 }
 
 /** Streams answer tokens from the local model for a single prompt. */
@@ -21,6 +23,10 @@ export async function* streamAnswer(
   prompt: string,
   opts: AskOptions = {},
 ): AsyncGenerator<string> {
+  const userContent = opts.transcript?.trim()
+    ? `[Live meeting transcript]\n${opts.transcript.trim()}\n\n[My question]\n${prompt}`
+    : prompt;
+
   let res: Response;
   try {
     res = await fetch(`${OLLAMA_URL}/api/chat`, {
@@ -31,7 +37,7 @@ export async function* streamAnswer(
         stream: true,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: prompt },
+          { role: "user", content: userContent },
         ],
       }),
       signal: opts.signal,

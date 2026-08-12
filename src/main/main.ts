@@ -7,12 +7,31 @@ import {
 } from "electron";
 import path from "node:path";
 import { streamAnswer } from "./llm";
+import { startAudioPipeline, type PipelineStatus } from "./audio";
 
 const isDev = process.argv.includes("--dev");
 
 let overlay: BrowserWindow | null = null;
 // When click-through is on, mouse events pass to the app behind the overlay.
 let clickThrough = true;
+let stopAudio: (() => void) | null = null;
+
+// ── Rolling transcript. ──────────────────────────────────────────────────
+// Keeps the most recent speech so the LLM can answer "in context" of the call.
+const TRANSCRIPT_MAX_CHARS = 4000;
+let transcript = "";
+
+function addSegment(text: string): void {
+  transcript = (transcript + " " + text).trim();
+  if (transcript.length > TRANSCRIPT_MAX_CHARS) {
+    transcript = transcript.slice(-TRANSCRIPT_MAX_CHARS);
+  }
+  overlay?.webContents.send("transcript:segment", text);
+}
+
+function sendAudioStatus(status: PipelineStatus): void {
+  overlay?.webContents.send("audio:status", status);
+}
 
 /**
  * Creates the overlay window. Everything here is in service of one goal:
@@ -69,7 +88,18 @@ function createOverlay(): void {
     overlay.webContents.openDevTools({ mode: "detach" });
   }
 
+  // Start transcription once the renderer can receive status/segment events.
+  overlay.webContents.on("did-finish-load", () => {
+    stopAudio?.();
+    stopAudio = startAudioPipeline({
+      onSegment: addSegment,
+      onStatus: sendAudioStatus,
+    });
+  });
+
   overlay.on("closed", () => {
+    stopAudio?.();
+    stopAudio = null;
     overlay = null;
   });
 }
@@ -117,7 +147,10 @@ ipcMain.on("llm:ask", async (evt, req: { id: string; prompt: string }) => {
   const controller = new AbortController();
   inflight.set(id, controller);
   try {
-    for await (const token of streamAnswer(prompt, { signal: controller.signal })) {
+    for await (const token of streamAnswer(prompt, {
+      signal: controller.signal,
+      transcript,
+    })) {
       if (evt.sender.isDestroyed()) break;
       evt.sender.send("llm:token", { id, token });
     }
@@ -151,6 +184,7 @@ app.whenReady().then(() => {
 
 app.on("will-quit", () => {
   globalShortcut.unregisterAll();
+  stopAudio?.();
 });
 
 // Keep running with no visible windows (overlay may be hidden).

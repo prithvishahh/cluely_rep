@@ -55,6 +55,18 @@ const api = {
   onClickThroughChanged: (cb: (clickThrough: boolean) => void) => {
     ipcRenderer.on("clickthrough:changed", (_e, v: boolean) => cb(v));
   },
+
+  /** Fired for each new transcript segment from the live meeting audio. */
+  onTranscriptSegment: (cb: (text: string) => void) => {
+    ipcRenderer.on("transcript:segment", (_e, text: string) => cb(text));
+  },
+
+  /** Fired when the audio/transcription pipeline status changes. */
+  onAudioStatus: (
+    cb: (status: { active: boolean; reason?: string }) => void,
+  ) => {
+    ipcRenderer.on("audio:status", (_e, s) => cb(s));
+  },
 };
 
 contextBridge.exposeInMainWorld("cluely", api);
