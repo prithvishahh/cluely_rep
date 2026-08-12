@@ -29,8 +29,6 @@ import {
 const isDev = process.argv.includes("--dev");
 
 let overlay: BrowserWindow | null = null;
-// When click-through is on, mouse events pass to the app behind the overlay.
-let clickThrough = true;
 let stopAudio: (() => void) | null = null;
 
 // ── Rolling transcript. ──────────────────────────────────────────────────
@@ -57,24 +55,25 @@ function sendAudioStatus(status: PipelineStatus): void {
  */
 function createOverlay(): void {
   const primary = screen.getPrimaryDisplay();
-  const { width } = primary.workAreaSize;
+  const area = primary.workArea;
 
-  const winWidth = 460;
-  const winHeight = 600;
+  // A wide, short window centered at the top of the screen. It's mostly
+  // transparent — just the centered bar (and the panel that drops below it).
+  const winWidth = 780;
+  const winHeight = 640;
 
   overlay = new BrowserWindow({
     width: winWidth,
     height: winHeight,
-    // Position: top-right, slightly inset.
-    x: width - winWidth - 24,
-    y: 48,
+    // Position: horizontally centered, near the top edge.
+    x: Math.round(area.x + (area.width - winWidth) / 2),
+    y: area.y + 6,
     frame: false,
     transparent: true,
     hasShadow: false,
     resizable: false,
     movable: true,
     skipTaskbar: true,
-    // Don't grab focus when it appears — critical so the meeting stays active.
     focusable: true,
     alwaysOnTop: true,
     // On macOS this keeps the window out of the app-switcher / mission control.
@@ -96,8 +95,10 @@ function createOverlay(): void {
   overlay.setAlwaysOnTop(true, "screen-saver");
   overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
-  // Start in click-through mode so the overlay never blocks the app behind it.
-  overlay.setIgnoreMouseEvents(clickThrough, { forward: true });
+  // Pass the mouse through by default; the renderer flips this on when the
+  // pointer is over the bar/panel, so the overlay never blocks the app behind
+  // it but is still fully clickable where it matters.
+  overlay.setIgnoreMouseEvents(true, { forward: true });
 
   overlay.loadFile(path.join(__dirname, "index.html"));
 
@@ -129,13 +130,6 @@ function toggleVisibility(): void {
   else overlay.showInactive(); // show without stealing focus
 }
 
-function toggleClickThrough(): void {
-  if (!overlay) return;
-  clickThrough = !clickThrough;
-  overlay.setIgnoreMouseEvents(clickThrough, { forward: true });
-  overlay.webContents.send("clickthrough:changed", clickThrough);
-}
-
 function registerShortcuts(): void {
   // Ask for an answer (the core Cluely gesture).
   globalShortcut.register("CommandOrControl+Enter", () => {
@@ -154,12 +148,6 @@ function registerShortcuts(): void {
   // Show / hide the overlay entirely.
   globalShortcut.register("CommandOrControl+\\", () => {
     toggleVisibility();
-  });
-
-  // Toggle whether the overlay is interactive (to type) vs click-through.
-  globalShortcut.register("CommandOrControl+Shift+Space", () => {
-    toggleClickThrough();
-    if (overlay && !clickThrough) overlay.focus(); // let the user type
   });
 }
 
@@ -216,6 +204,22 @@ ipcMain.on("llm:cancel", (_evt, req: { id: string }) => {
 // Windows loopback audio streamed from the renderer (16 kHz mono 16-bit PCM).
 ipcMain.on("audio:pcm", (_evt, chunk: ArrayBuffer) => {
   pushRendererPcm(Buffer.from(chunk));
+});
+
+// ── Overlay window controls. ─────────────────────────────────────────────
+// Renderer flips mouse capture on/off based on whether the pointer is over UI.
+ipcMain.on("overlay:interactive", (_evt, on: boolean) => {
+  overlay?.setIgnoreMouseEvents(!on, { forward: true });
+});
+
+ipcMain.on("overlay:focus", () => {
+  overlay?.show(); // brings to front + gives keyboard focus so the user can type
+});
+
+ipcMain.on("overlay:toggle-hidden", () => {
+  if (!overlay) return;
+  if (overlay.isVisible()) overlay.hide();
+  else overlay.showInactive();
 });
 
 // ── Knowledge grounding (Milestone 6). ──────────────────────────────────

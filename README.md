@@ -160,11 +160,15 @@ The header dot turns **green** when transcription is live; hover it for status.
 
 ## Shortcuts
 
+The overlay is a small **bar centered at the top of the screen**. It passes your
+mouse through by default (so it never blocks the app behind it) and becomes
+clickable automatically when you move the pointer over it. Drag the bar to
+reposition it.
+
 | Shortcut | Action |
 |---|---|
 | `⌘/Ctrl + Enter` | Ask (uses the live transcript as context) |
 | `⌘/Ctrl + Shift + Enter` | Ask using what's on screen (capture + OCR) |
-| `⌘/Ctrl + Shift + Space` | Toggle interactive (type) vs. click-through |
 | `⌘/Ctrl + \` | Show / hide the overlay |
 
 The **⧉** button next to *Ask* does the same as the screen-ask hotkey. On-device

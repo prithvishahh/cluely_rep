@@ -12,6 +12,18 @@ export interface AskHandlers {
  * exposing a tiny, typed API.
  */
 const api = {
+  /** Host platform, e.g. "darwin" | "win32" | "linux". */
+  platform: process.platform,
+
+  /** Toggle whether the overlay captures the mouse (hover-based pass-through). */
+  setInteractive: (on: boolean) => ipcRenderer.send("overlay:interactive", on),
+
+  /** Give the overlay keyboard focus so the user can type. */
+  focusOverlay: () => ipcRenderer.send("overlay:focus"),
+
+  /** Show / hide the whole overlay. */
+  toggleHidden: () => ipcRenderer.send("overlay:toggle-hidden"),
+
   /**
    * Ask the model a question. Tokens stream to `onToken`. Returns a cancel
    * function that aborts the generation and detaches listeners. Set
@@ -55,11 +67,6 @@ const api = {
   /** Fired when the "ask about screen" hotkey (Cmd/Ctrl+Shift+Enter) is pressed. */
   onAskScreen: (cb: () => void) => {
     ipcRenderer.on("action:ask-screen", cb);
-  },
-
-  /** Fired when click-through mode toggles; passes the new state. */
-  onClickThroughChanged: (cb: (clickThrough: boolean) => void) => {
-    ipcRenderer.on("clickthrough:changed", (_e, v: boolean) => cb(v));
   },
 
   /** Fired for each new transcript segment from the live meeting audio. */

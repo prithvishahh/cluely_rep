@@ -7,37 +7,54 @@
     <title>overlay</title>
   </head>
   <body>
-    <div class="overlay" id="overlay">
-      <header class="bar" id="dragbar">
-        <span class="dot" id="audioDot" title="transcription off"></span>
-        <span class="title">assistant</span>
-        <span class="hint" id="modeHint">click-through</span>
-      </header>
+    <div id="root">
+      <!-- The always-visible top bar (centered pill). -->
+      <div class="bar interactive" id="bar">
+        <button class="seg listen" id="listenBtn">
+          <span class="dot" id="audioDot"></span>
+          <span id="listenLabel">Listen</span>
+          <span class="timer" id="timer" hidden>00:00</span>
+        </button>
 
-      <nav class="actions" id="actions"></nav>
+        <span class="divider"></span>
 
-      <section class="transcript" id="transcript" hidden></section>
+        <button class="seg primary" id="askBtn">
+          Ask AI <span class="keys" data-keys="mod,↵"></span>
+        </button>
 
-      <main class="answer" id="answer">
-        <p class="placeholder">
-          Press <kbd>⌘/Ctrl</kbd>+<kbd>Enter</kbd> to ask.<br />
-          <kbd>⌘/Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> to type ·
-          <kbd>⌘/Ctrl</kbd>+<kbd>\\</kbd> to hide.
-        </p>
-      </main>
+        <button class="seg" id="screenBtn">
+          Screen <span class="keys" data-keys="mod,⇧,↵"></span>
+        </button>
 
-      <footer class="input" id="inputRow">
-        <input
-          id="prompt"
-          type="text"
-          placeholder="Ask something…"
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <button id="kbBtn" class="ghost" title="Add reference material (résumé, docs)">📎<span id="kbCount" class="badge" hidden>0</span></button>
-        <button id="screenBtn" class="ghost" title="Answer using what's on screen (⌘/Ctrl+Shift+Enter)">⧉</button>
-        <button id="send">Ask</button>
-      </footer>
+        <span class="divider"></span>
+
+        <button class="seg icon" id="kbBtn" title="Add reference material (résumé, docs)">
+          📎<span class="badge" id="kbCount" hidden>0</span>
+        </button>
+
+        <button class="seg" id="hideBtn">
+          Hide <span class="keys" data-keys="mod,\"></span>
+        </button>
+      </div>
+
+      <!-- The response panel drops down below the bar when active. -->
+      <div class="panel interactive" id="panel" hidden>
+        <nav class="actions" id="actions"></nav>
+        <section class="transcript" id="transcript" hidden></section>
+        <main class="answer" id="answer">
+          <div class="placeholder">Ask anything, or press the shortcut.</div>
+        </main>
+        <div class="input-row">
+          <input
+            id="prompt"
+            type="text"
+            placeholder="Ask a follow-up…"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="send" class="send" title="Ask">↵</button>
+        </div>
+      </div>
     </div>
 
     <script src="renderer.js"></script>
