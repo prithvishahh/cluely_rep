@@ -35,7 +35,15 @@ jobs:
             if [ "$n" -ge 3 ]; then echo "npm ci failed after $n attempts"; exit 1; fi
             echo "npm ci failed (attempt $n) — retrying in 15s…"; sleep 15
           done
-      - run: npm run dist:win
+      - name: Build Windows app (retry on flaky app-builder)
+        shell: bash
+        run: |
+          n=0
+          until npm run dist:win; do
+            n=$((n+1))
+            if [ "$n" -ge 3 ]; then echo "dist:win failed after $n attempts"; exit 1; fi
+            echo "dist:win failed (attempt $n) — retrying in 15s…"; sleep 15
+          done
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -80,7 +88,15 @@ jobs:
         # so a compile issue here must not block the .dmg.
         continue-on-error: true
         run: bash scripts/build-native.sh
-      - run: npm run dist:mac
+      - name: Build macOS app (retry on flaky app-builder)
+        shell: bash
+        run: |
+          n=0
+          until npm run dist:mac; do
+            n=$((n+1))
+            if [ "$n" -ge 3 ]; then echo "dist:mac failed after $n attempts"; exit 1; fi
+            echo "dist:mac failed (attempt $n) — retrying in 15s…"; sleep 15
+          done
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
