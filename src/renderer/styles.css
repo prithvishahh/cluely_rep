@@ -256,7 +256,15 @@ kbd {
 .composer-tools {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.composer-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
 }
 
 .smart {

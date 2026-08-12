@@ -70,6 +70,7 @@ function createOverlay(): void {
     y: area.y + 6,
     frame: false,
     transparent: true,
+    backgroundColor: "#00000000",
     hasShadow: false,
     resizable: true,
     movable: true,
@@ -82,6 +83,9 @@ function createOverlay(): void {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
+      // Preload uses ipcRenderer only; keep it out of the sandbox so the
+      // context bridge always loads (a sandboxed preload can't require node).
+      sandbox: false,
     },
   });
 
@@ -91,9 +95,12 @@ function createOverlay(): void {
   // and most recorders composite the frame WITHOUT this window.
   overlay.setContentProtection(true);
 
-  // Float above fullscreen apps (meetings are often fullscreen) and every space.
-  overlay.setAlwaysOnTop(true, "screen-saver");
-  overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // Float above other windows without the extreme "screen-saver" level, which
+  // can interfere with input focus on Windows.
+  overlay.setAlwaysOnTop(true, "floating");
+  if (process.platform === "darwin") {
+    overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  }
 
   overlay.loadFile(path.join(__dirname, "index.html"));
 

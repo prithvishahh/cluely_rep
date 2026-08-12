@@ -1,5 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { randomUUID } from "node:crypto";
+
+// Simple request-id generator. Deliberately avoids node:crypto, which is
+// unavailable in a sandboxed preload and would break the whole bridge.
+let idCounter = 0;
+const nextId = (): string => `${Date.now()}-${idCounter++}`;
 
 export interface AskHandlers {
   onToken: (token: string) => void;
@@ -31,7 +35,7 @@ const api = {
    * `opts.useScreen` to include OCR'd screen contents as context.
    */
   ask(prompt: string, handlers: AskHandlers, opts: { useScreen?: boolean } = {}): () => void {
-    const id = randomUUID();
+    const id = nextId();
 
     const onToken = (_e: unknown, m: { id: string; token: string }) => {
       if (m.id === id) handlers.onToken(m.token);

@@ -7,6 +7,15 @@ declare global {
   }
 }
 
+// If the preload bridge failed to load, surface it instead of a dead UI.
+if (!window.cluely) {
+  document.body.innerHTML =
+    '<div style="margin:10px auto;max-width:320px;padding:10px 14px;background:#3a1d1d;' +
+    "color:#ffd7d7;font:12px/1.4 system-ui;border-radius:12px;text-align:center\">" +
+    "Bridge failed to load — please restart the app.</div>";
+  throw new Error("cluely bridge unavailable");
+}
+
 const bar = document.getElementById("bar") as HTMLElement;
 const panel = document.getElementById("panel") as HTMLElement;
 const answerEl = document.getElementById("answer") as HTMLElement;
