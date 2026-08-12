@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>overlay</title>
+  </head>
+  <body>
+    <div class="overlay" id="overlay">
+      <header class="bar" id="dragbar">
+        <span class="dot"></span>
+        <span class="title">assistant</span>
+        <span class="hint" id="modeHint">click-through</span>
+      </header>
+
+      <main class="answer" id="answer">
+        <p class="placeholder">
+          Press <kbd>⌘/Ctrl</kbd>+<kbd>Enter</kbd> to ask.<br />
+          <kbd>⌘/Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> to type ·
+          <kbd>⌘/Ctrl</kbd>+<kbd>\\</kbd> to hide.
+        </p>
+      </main>
+
+      <footer class="input" id="inputRow">
+        <input
+          id="prompt"
+          type="text"
+          placeholder="Ask something…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="send">Ask</button>
+      </footer>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

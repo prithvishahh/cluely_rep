@@ -1,0 +1,22 @@
+{
+  "name": "cluely-rep",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Undetectable AI meeting overlay — a Cluely-style research replica. Electron MVP.",
+  "author": "",
+  "license": "MIT",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron . --dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "electron": "^33.2.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.2"
+  }
+}
