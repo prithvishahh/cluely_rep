@@ -12,8 +12,15 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { Transcriber, transcriberAvailable } from "./transcriber";
 
-const AUDIOCAP_BIN =
-  process.env.AUDIOCAP_BIN ?? path.join(process.cwd(), "native", "audiocap", "audiocap");
+// In a packaged app the helper is shipped under resources/native; in dev it
+// lives in the project tree.
+function resolveAudiocapBin(): string {
+  if (process.env.AUDIOCAP_BIN) return process.env.AUDIOCAP_BIN;
+  const packaged = path.join(process.resourcesPath ?? "", "native", "audiocap", "audiocap");
+  if (existsSync(packaged)) return packaged;
+  return path.join(process.cwd(), "native", "audiocap", "audiocap");
+}
+const AUDIOCAP_BIN = resolveAudiocapBin();
 
 export interface PipelineStatus {
   active: boolean;

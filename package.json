@@ -2,8 +2,8 @@
   "name": "cluely-rep",
   "version": "0.1.0",
   "private": true,
-  "description": "Undetectable AI meeting overlay — a Cluely-style research replica. Electron MVP.",
-  "author": "",
+  "description": "Undetectable AI meeting overlay — a Cluely-style research replica.",
+  "author": "Cluely Rep",
   "license": "MIT",
   "main": "dist/main.js",
   "scripts": {
@@ -11,7 +11,11 @@
     "watch": "node build.mjs --watch",
     "start": "npm run build && electron .",
     "dev": "npm run build && electron . --dev",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac"
   },
   "dependencies": {
     "pdf-parse": "^1.1.1",
@@ -20,7 +24,60 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
     "esbuild": "^0.24.0",
     "typescript": "^5.7.2"
+  },
+  "build": {
+    "appId": "com.cluelyrep.app",
+    "productName": "CluelyRep",
+    "directories": {
+      "output": "release",
+      "buildResources": "build-assets"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/tesseract.js/**",
+      "node_modules/tesseract.js-core/**"
+    ],
+    "extraResources": [
+      {
+        "from": "native",
+        "to": "native",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "CluelyRep"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    }
   }
 }

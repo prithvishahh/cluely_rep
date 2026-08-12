@@ -105,8 +105,14 @@ Milestones:
   Follow-ups, Fact-check, Who, Recap, Explain screen) that run against live
   context; uploadable reference docs (PDF via pdf-parse, text read directly)
   persisted in userData and injected as a `[Reference material]` block.
+- [x] **Packaging.** electron-builder config: Windows `nsis` installer +
+  `portable` .exe, macOS `dmg`, Linux `AppImage`. Runtime deps bundled (asar +
+  tesseract.js unpacked for wasm/worker), native helper shipped as an
+  extraResource, helper path resolves in both dev and packaged layouts.
+  Validated with an unpacked build + packaged-binary boot on Linux.
 - [ ] **Pivot decision — native rewrite** (remind owner).
-- [ ] **Cross-platform** — Windows audio (WASAPI loopback), packaging/signing.
+- [ ] **Code signing / notarization** so installers don't trip SmartScreen /
+  Gatekeeper (needs a paid Apple/Windows cert).
 
 ## Ethics / scope
 

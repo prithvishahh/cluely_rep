@@ -8,11 +8,12 @@ This is a learning/side project. It is built in the open to understand the
 engineering behind the product (audio capture, streaming transcription, screen
 OCR, low-latency LLM answers, and OS-level window exclusion).
 
-> **Status: Milestone 4 — cross-platform (Windows + macOS).**
-> Runs on both OSes. On Windows the invisibility works out of the box and system
-> audio is captured natively by Electron (loopback) with no extra build. On top
-> of: actions + knowledge grounding (M6), screen OCR (M5), transcription (M3),
-> local LLM answers (M2).
+> **Status: packaged, cross-platform (Windows + macOS).**
+> Builds into a real double-clickable app (installer / portable `.exe` / `.dmg`)
+> via electron-builder — no terminal needed after building once. On Windows the
+> invisibility works out of the box and system audio is captured natively by
+> Electron (loopback) with no extra build. On top of: actions + knowledge
+> grounding (M6), screen OCR (M5), transcription (M3), local LLM answers (M2).
 >
 > _(historical:)_ **Milestone 6 — actions + knowledge grounding.**
 > One-tap actions (Say next, Follow-ups, Fact-check, Who, Recap, Explain screen)
@@ -42,7 +43,37 @@ OCR, low-latency LLM answers, and OS-level window exclusion).
 > Planned pivot: once the demo works end-to-end, rewrite fully native
 > (Swift on macOS) for latency and footprint. Tracked in the roadmap.
 
-## Run it
+## Install as an app (build once, then just click)
+
+To get a real double-clickable app instead of running from a terminal, build an
+installer once. You need Node 18+ and the repo cloned. **Build on the OS you
+want the app for** (Windows builds on Windows, macOS on macOS — no cross-compile
+needed).
+
+```bash
+npm install
+npm run dist:win   # Windows: makes an installer + a portable .exe
+# or
+npm run dist:mac   # macOS: makes a .dmg
+```
+
+The output lands in **`release/`**:
+
+- **Windows** — `CluelyRep Setup … .exe` (installer → Start Menu + desktop
+  shortcut) and `CluelyRep-…-portable.exe` (a single file you can just
+  double-click, no install). Either way, after that it's a normal app you open
+  by clicking its icon.
+- **macOS** — a `.dmg`; drag the app to Applications.
+
+Everything runs locally — the packaged app still uses your local Ollama for
+answers and (optionally) local whisper.cpp for transcription; nothing is sent to
+a server. Ollama must be installed and running for answers to work.
+
+> First launch on macOS also needs the native audio helper built
+> (`./scripts/build-native.sh`) if you want transcription; on Windows nothing
+> extra is needed for audio capture.
+
+## Run from source (development)
 
 Requires Node 18+. Runs on **macOS and Windows** (invisibility is a no-op on
 Linux). Everything except system-audio transcription works out of the box on
