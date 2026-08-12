@@ -13,8 +13,8 @@ const targets = [
     outfile: "dist/main.js",
     platform: "node",
     // tesseract.js ships worker + wasm assets that must not be inlined;
-    // resolve it from node_modules at runtime.
-    external: ["electron", "tesseract.js"],
+    // pdf-parse resolves its own assets too. Keep them as runtime requires.
+    external: ["electron", "tesseract.js", "pdf-parse"],
   },
   {
     entryPoints: ["src/main/preload.ts"],

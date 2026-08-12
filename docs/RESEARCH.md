@@ -96,8 +96,12 @@ Milestones:
   device, and the text is fed to the LLM as `[On screen]` context. Triggered by
   ⌘/Ctrl+Shift+Enter or the ⧉ button. A native Vision-based OCR is the upgrade
   path (esp. in the native rewrite).
-- [ ] **M6 — Canned actions + knowledge upload/grounding.**
+- [x] **M6 — Actions + knowledge grounding.** One-tap action chips (Say next,
+  Follow-ups, Fact-check, Who, Recap, Explain screen) that run against live
+  context; uploadable reference docs (PDF via pdf-parse, text read directly)
+  persisted in userData and injected as a `[Reference material]` block.
 - [ ] **Pivot decision — native rewrite** (remind owner).
+- [ ] **Cross-platform** — Windows audio (WASAPI loopback), packaging/signing.
 
 ## Ethics / scope
 

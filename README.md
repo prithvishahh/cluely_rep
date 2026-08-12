@@ -8,12 +8,22 @@ This is a learning/side project. It is built in the open to understand the
 engineering behind the product (audio capture, streaming transcription, screen
 OCR, low-latency LLM answers, and OS-level window exclusion).
 
-> **Status: Milestone 5 — screen OCR.**
-> The overlay can read the screen (capture + on-device OCR) and answer using it,
-> on top of live transcription (M3) and local LLM answers (M2). The app
-> **degrades gracefully** — without the native audio pieces built it still runs
-> as the invisible overlay + local LLM + screen OCR. See
+> **Status: Milestone 6 — actions + knowledge grounding.**
+> One-tap actions (Say next, Follow-ups, Fact-check, Who, Recap, Explain screen)
+> and uploadable reference docs (résumé/PDF/text) that ground every answer — on
+> top of live transcription (M3), screen OCR (M5), and local LLM answers (M2).
+> The app **degrades gracefully** — without the native audio pieces built it
+> still runs as the invisible overlay + local LLM + screen OCR + knowledge. See
 > [`docs/RESEARCH.md`](docs/RESEARCH.md) for the full research brief and roadmap.
+
+## Features
+
+- **Invisible overlay** — excluded from screen-share capture (`setContentProtection`).
+- **Local LLM answers** — streamed from Ollama; nothing leaves the machine.
+- **Live transcription** — native ScreenCaptureKit system audio → whisper.cpp.
+- **Screen OCR** — reads the screen and answers using it.
+- **One-tap actions** — Say next · Follow-ups · Fact-check · Who · Recap · Explain screen.
+- **Knowledge grounding** — upload a résumé / docs (PDF or text); answers use them.
 
 ## Stack (current)
 
@@ -101,6 +111,11 @@ The header dot turns **green** when transcription is live; hover it for status.
 The **⧉** button next to *Ask* does the same as the screen-ask hotkey. On-device
 OCR (tesseract.js) downloads its English model once on first use (needs network
 that first time).
+
+The **action chips** run predefined prompts against the live context. The **📎**
+button uploads reference material (PDF/text) that grounds every answer — the
+badge shows how many docs are loaded; **shift-click** it to clear them. Uploaded
+docs persist across restarts (in the app's userData).
 
 ## Verifying invisibility (do this first, on a Mac)
 

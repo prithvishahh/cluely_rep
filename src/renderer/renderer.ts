@@ -10,9 +10,28 @@ const answerEl = document.getElementById("answer") as HTMLElement;
 const promptEl = document.getElementById("prompt") as HTMLInputElement;
 const sendEl = document.getElementById("send") as HTMLButtonElement;
 const screenBtn = document.getElementById("screenBtn") as HTMLButtonElement;
+const kbBtn = document.getElementById("kbBtn") as HTMLButtonElement;
+const kbCount = document.getElementById("kbCount") as HTMLElement;
+const actionsEl = document.getElementById("actions") as HTMLElement;
 const modeHintEl = document.getElementById("modeHint") as HTMLElement;
 const transcriptEl = document.getElementById("transcript") as HTMLElement;
 const audioDot = document.getElementById("audioDot") as HTMLElement;
+
+// One-tap actions. Each runs against the current context (transcript, and
+// screen when useScreen is set).
+interface Action {
+  label: string;
+  prompt: string;
+  useScreen?: boolean;
+}
+const ACTIONS: Action[] = [
+  { label: "Say next", prompt: "What should I say next? Give a concise line I can say out loud." },
+  { label: "Follow-ups", prompt: "Suggest 3 sharp follow-up questions I could ask right now." },
+  { label: "Fact-check", prompt: "Fact-check the most recent claims. Flag anything wrong with the correction." },
+  { label: "Who", prompt: "Who am I talking to and what do they likely want? Infer from the conversation." },
+  { label: "Recap", prompt: "Recap the conversation so far: key points, decisions, and open items." },
+  { label: "Explain screen", prompt: "Explain what's on screen, and answer any question or problem shown.", useScreen: true },
+];
 
 let cancelCurrent: (() => void) | null = null;
 
@@ -73,6 +92,35 @@ window.cluely.onAsk(() => ask(promptEl.value || "What should I say next?"));
 window.cluely.onAskScreen(() =>
   ask(promptEl.value || "Answer the question or problem shown on screen.", true),
 );
+
+// Render the one-tap action chips.
+for (const action of ACTIONS) {
+  const chip = document.createElement("button");
+  chip.className = "chip";
+  chip.textContent = action.label;
+  chip.addEventListener("click", () => ask(action.prompt, action.useScreen));
+  actionsEl.appendChild(chip);
+}
+
+// ── Knowledge grounding. ─────────────────────────────────────────────────
+function renderKnowledge(names: string[]): void {
+  const n = names.length;
+  kbCount.hidden = n === 0;
+  kbCount.textContent = String(n);
+  kbBtn.title = n
+    ? `${n} doc${n > 1 ? "s" : ""} loaded: ${names.join(", ")} — click to add more, shift-click to clear`
+    : "Add reference material (résumé, docs)";
+}
+
+kbBtn.addEventListener("click", async (e) => {
+  const names = e.shiftKey
+    ? await window.cluely.knowledge.clear()
+    : await window.cluely.knowledge.add();
+  renderKnowledge(names);
+});
+
+window.cluely.knowledge.onChanged(renderKnowledge);
+window.cluely.knowledge.list().then(renderKnowledge);
 
 // Reflect click-through state in the header so the user knows if they can type.
 window.cluely.onClickThroughChanged((clickThrough) => {

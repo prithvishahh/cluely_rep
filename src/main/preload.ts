@@ -73,6 +73,17 @@ const api = {
   ) => {
     ipcRenderer.on("audio:status", (_e, s) => cb(s));
   },
+
+  /** Knowledge grounding: uploaded reference docs. */
+  knowledge: {
+    list: (): Promise<string[]> => ipcRenderer.invoke("knowledge:list"),
+    /** Opens a file picker; resolves with the new list of doc names. */
+    add: (): Promise<string[]> => ipcRenderer.invoke("knowledge:add"),
+    clear: (): Promise<string[]> => ipcRenderer.invoke("knowledge:clear"),
+    onChanged: (cb: (names: string[]) => void) => {
+      ipcRenderer.on("knowledge:changed", (_e, names: string[]) => cb(names));
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld("cluely", api);

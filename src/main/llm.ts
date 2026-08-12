@@ -18,6 +18,8 @@ export interface AskOptions {
   transcript?: string;
   /** OCR'd text from the current screen, prepended as context when present. */
   screen?: string;
+  /** User-uploaded reference material (résumé, docs) to ground the answer. */
+  knowledge?: string;
 }
 
 /** Streams answer tokens from the local model for a single prompt. */
@@ -26,6 +28,9 @@ export async function* streamAnswer(
   opts: AskOptions = {},
 ): AsyncGenerator<string> {
   const parts: string[] = [];
+  if (opts.knowledge?.trim()) {
+    parts.push(`[Reference material]\n${opts.knowledge.trim()}`);
+  }
   if (opts.screen?.trim()) parts.push(`[On screen]\n${opts.screen.trim()}`);
   if (opts.transcript?.trim()) {
     parts.push(`[Live meeting transcript]\n${opts.transcript.trim()}`);

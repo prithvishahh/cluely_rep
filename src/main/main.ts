@@ -1,6 +1,7 @@
 import {
   app,
   BrowserWindow,
+  dialog,
   globalShortcut,
   ipcMain,
   screen,
@@ -10,6 +11,13 @@ import { streamAnswer } from "./llm";
 import { startAudioPipeline, type PipelineStatus } from "./audio";
 import { captureScreen } from "./screen";
 import { ocr, disposeOcr } from "./ocr";
+import {
+  addFiles,
+  clearKnowledge,
+  contextText,
+  initKnowledge,
+  listNames,
+} from "./knowledge";
 
 const isDev = process.argv.includes("--dev");
 
@@ -174,6 +182,7 @@ ipcMain.on(
         signal: controller.signal,
         transcript,
         screen: screenText,
+        knowledge: contextText(),
       })) {
         if (evt.sender.isDestroyed()) break;
         evt.sender.send("llm:token", { id, token });
@@ -195,10 +204,34 @@ ipcMain.on("llm:cancel", (_evt, req: { id: string }) => {
   inflight.delete(req.id);
 });
 
+// ── Knowledge grounding (Milestone 6). ──────────────────────────────────
+ipcMain.handle("knowledge:list", () => listNames());
+
+ipcMain.handle("knowledge:add", async () => {
+  const res = await dialog.showOpenDialog({
+    title: "Add reference material",
+    properties: ["openFile", "multiSelections"],
+    filters: [
+      { name: "Documents", extensions: ["pdf", "txt", "md", "markdown", "json", "csv", "log"] },
+    ],
+  });
+  if (res.canceled || res.filePaths.length === 0) return listNames();
+  const names = await addFiles(res.filePaths);
+  overlay?.webContents.send("knowledge:changed", names);
+  return names;
+});
+
+ipcMain.handle("knowledge:clear", async () => {
+  const names = await clearKnowledge();
+  overlay?.webContents.send("knowledge:changed", names);
+  return names;
+});
+
 app.whenReady().then(() => {
   // Hide the dock icon on macOS so nothing hints at the app's presence.
   if (process.platform === "darwin" && app.dock) app.dock.hide();
 
+  initKnowledge();
   createOverlay();
   registerShortcuts();
 
