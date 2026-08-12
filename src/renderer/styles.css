@@ -154,6 +154,21 @@ kbd {
   cursor: pointer;
 }
 
-#send:active {
+#send:active,
+.ghost:active {
   transform: translateY(1px);
+}
+
+.ghost {
+  padding: 8px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--fg);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ghost:hover {
+  border-color: var(--accent);
 }

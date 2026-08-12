@@ -16,6 +16,8 @@ export interface AskOptions {
   signal?: AbortSignal;
   /** Recent live meeting transcript, prepended as context when present. */
   transcript?: string;
+  /** OCR'd text from the current screen, prepended as context when present. */
+  screen?: string;
 }
 
 /** Streams answer tokens from the local model for a single prompt. */
@@ -23,9 +25,13 @@ export async function* streamAnswer(
   prompt: string,
   opts: AskOptions = {},
 ): AsyncGenerator<string> {
-  const userContent = opts.transcript?.trim()
-    ? `[Live meeting transcript]\n${opts.transcript.trim()}\n\n[My question]\n${prompt}`
-    : prompt;
+  const parts: string[] = [];
+  if (opts.screen?.trim()) parts.push(`[On screen]\n${opts.screen.trim()}`);
+  if (opts.transcript?.trim()) {
+    parts.push(`[Live meeting transcript]\n${opts.transcript.trim()}`);
+  }
+  parts.push(`[My question]\n${prompt}`);
+  const userContent = parts.length > 1 ? parts.join("\n\n") : prompt;
 
   let res: Response;
   try {

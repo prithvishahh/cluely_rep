@@ -12,7 +12,9 @@ const targets = [
     entryPoints: ["src/main/main.ts"],
     outfile: "dist/main.js",
     platform: "node",
-    external: ["electron"],
+    // tesseract.js ships worker + wasm assets that must not be inlined;
+    // resolve it from node_modules at runtime.
+    external: ["electron", "tesseract.js"],
   },
   {
     entryPoints: ["src/main/preload.ts"],

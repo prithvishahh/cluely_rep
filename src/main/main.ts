@@ -8,6 +8,8 @@ import {
 import path from "node:path";
 import { streamAnswer } from "./llm";
 import { startAudioPipeline, type PipelineStatus } from "./audio";
+import { captureScreen } from "./screen";
+import { ocr, disposeOcr } from "./ocr";
 
 const isDev = process.argv.includes("--dev");
 
@@ -125,6 +127,13 @@ function registerShortcuts(): void {
     overlay.webContents.send("action:ask");
   });
 
+  // Ask using what's on screen (capture + OCR as context).
+  globalShortcut.register("CommandOrControl+Shift+Enter", () => {
+    if (!overlay) return;
+    overlay.showInactive();
+    overlay.webContents.send("action:ask-screen");
+  });
+
   // Show / hide the overlay entirely.
   globalShortcut.register("CommandOrControl+\\", () => {
     toggleVisibility();
@@ -142,28 +151,44 @@ function registerShortcuts(): void {
 // renderer can correlate tokens and cancel in-flight generations.
 const inflight = new Map<string, AbortController>();
 
-ipcMain.on("llm:ask", async (evt, req: { id: string; prompt: string }) => {
-  const { id, prompt } = req;
-  const controller = new AbortController();
-  inflight.set(id, controller);
-  try {
-    for await (const token of streamAnswer(prompt, {
-      signal: controller.signal,
-      transcript,
-    })) {
-      if (evt.sender.isDestroyed()) break;
-      evt.sender.send("llm:token", { id, token });
+ipcMain.on(
+  "llm:ask",
+  async (evt, req: { id: string; prompt: string; useScreen?: boolean }) => {
+    const { id, prompt, useScreen } = req;
+    const controller = new AbortController();
+    inflight.set(id, controller);
+
+    // Optionally read the screen (capture + OCR) for on-screen context.
+    let screenText = "";
+    if (useScreen) {
+      try {
+        const png = await captureScreen();
+        if (png) screenText = await ocr(png);
+      } catch (err) {
+        console.error("[ocr]", (err as Error).message);
+      }
     }
-    if (!evt.sender.isDestroyed()) evt.sender.send("llm:done", { id });
-  } catch (err) {
-    if ((err as Error)?.name === "AbortError") return;
-    if (!evt.sender.isDestroyed()) {
-      evt.sender.send("llm:error", { id, message: (err as Error).message });
+
+    try {
+      for await (const token of streamAnswer(prompt, {
+        signal: controller.signal,
+        transcript,
+        screen: screenText,
+      })) {
+        if (evt.sender.isDestroyed()) break;
+        evt.sender.send("llm:token", { id, token });
+      }
+      if (!evt.sender.isDestroyed()) evt.sender.send("llm:done", { id });
+    } catch (err) {
+      if ((err as Error)?.name === "AbortError") return;
+      if (!evt.sender.isDestroyed()) {
+        evt.sender.send("llm:error", { id, message: (err as Error).message });
+      }
+    } finally {
+      inflight.delete(id);
     }
-  } finally {
-    inflight.delete(id);
-  }
-});
+  },
+);
 
 ipcMain.on("llm:cancel", (_evt, req: { id: string }) => {
   inflight.get(req.id)?.abort();
@@ -185,6 +210,7 @@ app.whenReady().then(() => {
 app.on("will-quit", () => {
   globalShortcut.unregisterAll();
   stopAudio?.();
+  void disposeOcr();
 });
 
 // Keep running with no visible windows (overlay may be hidden).

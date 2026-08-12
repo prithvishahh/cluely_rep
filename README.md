@@ -8,11 +8,11 @@ This is a learning/side project. It is built in the open to understand the
 engineering behind the product (audio capture, streaming transcription, screen
 OCR, low-latency LLM answers, and OS-level window exclusion).
 
-> **Status: Milestone 3 — live meeting transcription (macOS).**
-> System audio is captured natively (ScreenCaptureKit) and transcribed locally
-> (whisper.cpp); recent transcript is fed to the model as context. Screen OCR
-> is next. The app **degrades gracefully** — without the native pieces built it
-> still runs as the invisible overlay + local LLM. See
+> **Status: Milestone 5 — screen OCR.**
+> The overlay can read the screen (capture + on-device OCR) and answer using it,
+> on top of live transcription (M3) and local LLM answers (M2). The app
+> **degrades gracefully** — without the native audio pieces built it still runs
+> as the invisible overlay + local LLM + screen OCR. See
 > [`docs/RESEARCH.md`](docs/RESEARCH.md) for the full research brief and roadmap.
 
 ## Stack (current)
@@ -93,9 +93,14 @@ The header dot turns **green** when transcription is live; hover it for status.
 
 | Shortcut | Action |
 |---|---|
-| `⌘/Ctrl + Enter` | Ask (the core gesture) |
+| `⌘/Ctrl + Enter` | Ask (uses the live transcript as context) |
+| `⌘/Ctrl + Shift + Enter` | Ask using what's on screen (capture + OCR) |
 | `⌘/Ctrl + Shift + Space` | Toggle interactive (type) vs. click-through |
 | `⌘/Ctrl + \` | Show / hide the overlay |
+
+The **⧉** button next to *Ask* does the same as the screen-ask hotkey. On-device
+OCR (tesseract.js) downloads its English model once on first use (needs network
+that first time).
 
 ## Verifying invisibility (do this first, on a Mac)
 

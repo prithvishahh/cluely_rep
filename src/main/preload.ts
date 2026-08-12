@@ -14,9 +14,10 @@ export interface AskHandlers {
 const api = {
   /**
    * Ask the model a question. Tokens stream to `onToken`. Returns a cancel
-   * function that aborts the generation and detaches listeners.
+   * function that aborts the generation and detaches listeners. Set
+   * `opts.useScreen` to include OCR'd screen contents as context.
    */
-  ask(prompt: string, handlers: AskHandlers): () => void {
+  ask(prompt: string, handlers: AskHandlers, opts: { useScreen?: boolean } = {}): () => void {
     const id = randomUUID();
 
     const onToken = (_e: unknown, m: { id: string; token: string }) => {
@@ -38,7 +39,7 @@ const api = {
     ipcRenderer.on("llm:token", onToken);
     ipcRenderer.on("llm:done", onDone);
     ipcRenderer.on("llm:error", onError);
-    ipcRenderer.send("llm:ask", { id, prompt });
+    ipcRenderer.send("llm:ask", { id, prompt, useScreen: opts.useScreen ?? false });
 
     return () => {
       ipcRenderer.send("llm:cancel", { id });
@@ -49,6 +50,11 @@ const api = {
   /** Fired when the global "ask" hotkey (Cmd/Ctrl+Enter) is pressed. */
   onAsk: (cb: () => void) => {
     ipcRenderer.on("action:ask", cb);
+  },
+
+  /** Fired when the "ask about screen" hotkey (Cmd/Ctrl+Shift+Enter) is pressed. */
+  onAskScreen: (cb: () => void) => {
+    ipcRenderer.on("action:ask-screen", cb);
   },
 
   /** Fired when click-through mode toggles; passes the new state. */

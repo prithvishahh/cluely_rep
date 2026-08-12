@@ -13,6 +13,9 @@
     "dev": "npm run build && electron . --dev",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "tesseract.js": "^5.1.1"
+  },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "electron": "^33.2.0",

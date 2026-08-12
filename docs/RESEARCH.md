@@ -91,7 +91,11 @@ Milestones:
   unverified on Linux — compile/test on macOS.*
 - [ ] **M4 — Cross-platform audio.** Windows WASAPI loopback; refine macOS
   (VAD/streaming, mic + system mix).
-- [ ] **M5 — Screen OCR** so answers can use on-screen content.
+- [x] **M5 — Screen OCR.** `desktopCapturer` grabs the primary display (our
+  own overlay is excluded via content protection), tesseract.js OCRs it on
+  device, and the text is fed to the LLM as `[On screen]` context. Triggered by
+  ⌘/Ctrl+Shift+Enter or the ⧉ button. A native Vision-based OCR is the upgrade
+  path (esp. in the native rewrite).
 - [ ] **M6 — Canned actions + knowledge upload/grounding.**
 - [ ] **Pivot decision — native rewrite** (remind owner).
 
