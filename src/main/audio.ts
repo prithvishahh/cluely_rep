@@ -1,5 +1,11 @@
-// Audio pipeline: spawns the native ScreenCaptureKit helper, pipes its PCM into
-// the whisper transcriber, and emits transcript segments + status.
+// Audio pipeline — platform-aware. Both paths feed the same whisper transcriber.
+//
+//   macOS   : spawn the native ScreenCaptureKit helper (native/audiocap) which
+//             streams system-audio PCM to stdout.
+//   Windows : the renderer captures system (loopback) audio via getDisplayMedia
+//             and streams PCM to us over IPC (see pushRendererPcm); no native
+//             code needed.
+//   other   : unsupported — transcription stays off, app still runs.
 
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -14,34 +20,48 @@ export interface PipelineStatus {
   reason?: string;
 }
 
-function captureAvailable(): { ok: boolean; reason?: string } {
-  if (process.platform !== "darwin") {
-    return { ok: false, reason: "system-audio capture helper is macOS-only" };
-  }
-  if (!existsSync(AUDIOCAP_BIN)) {
-    return { ok: false, reason: `audio helper not built — run scripts/build-native.sh` };
-  }
-  return { ok: true };
-}
-
-/** Overall readiness of the transcription pipeline. */
-export function pipelineStatus(): PipelineStatus {
-  const cap = captureAvailable();
-  if (!cap.ok) return { active: false, reason: cap.reason };
-  const stt = transcriberAvailable();
-  if (!stt.ok) return { active: false, reason: stt.reason };
-  return { active: true };
-}
-
 export interface PipelineHandlers {
   onSegment: (text: string) => void;
   onStatus: (status: PipelineStatus) => void;
 }
 
+let transcriber: Transcriber | null = null;
+
+function macHelperAvailable(): { ok: boolean; reason?: string } {
+  if (!existsSync(AUDIOCAP_BIN)) {
+    return { ok: false, reason: "audio helper not built — run scripts/build-native.sh" };
+  }
+  return { ok: true };
+}
+
+/** Overall readiness of the transcription pipeline for this OS. */
+export function pipelineStatus(): PipelineStatus {
+  const stt = transcriberAvailable();
+  if (!stt.ok) return { active: false, reason: stt.reason };
+
+  if (process.platform === "darwin") {
+    const cap = macHelperAvailable();
+    return cap.ok ? { active: true } : { active: false, reason: cap.reason };
+  }
+  if (process.platform === "win32") {
+    return { active: true }; // renderer supplies loopback audio
+  }
+  return { active: false, reason: "system-audio capture not supported on this OS" };
+}
+
+/** True when the renderer must capture loopback audio (Windows). */
+export function needsRendererCapture(): boolean {
+  return process.platform === "win32" && pipelineStatus().active;
+}
+
+/** Feed PCM (16 kHz mono 16-bit) captured by the renderer into the transcriber. */
+export function pushRendererPcm(pcm: Buffer): void {
+  transcriber?.push(pcm);
+}
+
 /**
- * Starts capture + transcription. Returns a stop function. If the pipeline
- * isn't available, reports why via onStatus and returns a no-op stop — the app
- * keeps working without transcription.
+ * Starts transcription. Returns a stop function. If unavailable, reports why via
+ * onStatus and returns a no-op stop — the app keeps working without transcription.
  */
 export function startAudioPipeline(handlers: PipelineHandlers): () => void {
   const status = pipelineStatus();
@@ -50,11 +70,20 @@ export function startAudioPipeline(handlers: PipelineHandlers): () => void {
     return () => {};
   }
 
-  const transcriber = new Transcriber(
+  transcriber = new Transcriber(
     (text) => handlers.onSegment(text),
     (message) => handlers.onStatus({ active: false, reason: message }),
   );
 
+  // Windows: nothing to spawn — the renderer streams PCM via pushRendererPcm().
+  if (process.platform !== "darwin") {
+    handlers.onStatus({ active: true });
+    return () => {
+      transcriber = null;
+    };
+  }
+
+  // macOS: spawn the native ScreenCaptureKit helper.
   let proc: ChildProcess;
   try {
     proc = spawn(AUDIOCAP_BIN, [], { stdio: ["ignore", "pipe", "pipe"] });
@@ -63,14 +92,12 @@ export function startAudioPipeline(handlers: PipelineHandlers): () => void {
     return () => {};
   }
 
-  proc.stdout?.on("data", (buf: Buffer) => transcriber.push(buf));
+  proc.stdout?.on("data", (buf: Buffer) => transcriber?.push(buf));
   proc.stderr?.on("data", (buf: Buffer) => {
     const line = buf.toString().trim();
     if (line) console.error("[audiocap]", line);
   });
-  proc.on("error", (err) =>
-    handlers.onStatus({ active: false, reason: err.message }),
-  );
+  proc.on("error", (err) => handlers.onStatus({ active: false, reason: err.message }));
   proc.on("exit", (code) => {
     if (code && code !== 0) {
       handlers.onStatus({
@@ -84,5 +111,6 @@ export function startAudioPipeline(handlers: PipelineHandlers): () => void {
 
   return () => {
     proc.kill("SIGTERM");
+    transcriber = null;
   };
 }

@@ -1,14 +1,21 @@
 import {
   app,
   BrowserWindow,
+  desktopCapturer,
   dialog,
   globalShortcut,
   ipcMain,
   screen,
+  session,
 } from "electron";
 import path from "node:path";
 import { streamAnswer } from "./llm";
-import { startAudioPipeline, type PipelineStatus } from "./audio";
+import {
+  needsRendererCapture,
+  pushRendererPcm,
+  startAudioPipeline,
+  type PipelineStatus,
+} from "./audio";
 import { captureScreen } from "./screen";
 import { ocr, disposeOcr } from "./ocr";
 import {
@@ -105,6 +112,8 @@ function createOverlay(): void {
       onSegment: addSegment,
       onStatus: sendAudioStatus,
     });
+    // On Windows the renderer supplies loopback audio; tell it to start.
+    if (needsRendererCapture()) overlay?.webContents.send("audio:capture-start");
   });
 
   overlay.on("closed", () => {
@@ -204,6 +213,11 @@ ipcMain.on("llm:cancel", (_evt, req: { id: string }) => {
   inflight.delete(req.id);
 });
 
+// Windows loopback audio streamed from the renderer (16 kHz mono 16-bit PCM).
+ipcMain.on("audio:pcm", (_evt, chunk: ArrayBuffer) => {
+  pushRendererPcm(Buffer.from(chunk));
+});
+
 // ── Knowledge grounding (Milestone 6). ──────────────────────────────────
 ipcMain.handle("knowledge:list", () => listNames());
 
@@ -232,6 +246,23 @@ app.whenReady().then(() => {
   if (process.platform === "darwin" && app.dock) app.dock.hide();
 
   initKnowledge();
+
+  // Grant system-audio (loopback) capture to the renderer without a picker.
+  // 'loopback' captures system audio on Windows; a video source is required by
+  // the API even though the renderer discards it.
+  session.defaultSession.setDisplayMediaRequestHandler(
+    (_request, callback) => {
+      desktopCapturer.getSources({ types: ["screen"] }).then((sources) => {
+        if (sources.length === 0) {
+          callback({});
+          return;
+        }
+        callback({ video: sources[0], audio: "loopback" });
+      });
+    },
+    { useSystemPicker: false },
+  );
+
   createOverlay();
   registerShortcuts();
 

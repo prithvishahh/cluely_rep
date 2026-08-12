@@ -89,8 +89,13 @@ Milestones:
   transcription (`transcriber.ts`) → rolling transcript fed to the LLM as
   context. Degrades gracefully when native pieces aren't built. *Native code is
   unverified on Linux — compile/test on macOS.*
-- [ ] **M4 — Cross-platform audio.** Windows WASAPI loopback; refine macOS
-  (VAD/streaming, mic + system mix).
+- [x] **M4 — Cross-platform (Windows).** Platform-aware audio pipeline: Windows
+  captures system (loopback) audio in the renderer via `getDisplayMedia` +
+  `setDisplayMediaRequestHandler({ audio: 'loopback' })` (no native code),
+  resamples to 16 kHz mono in an `AudioContext`, streams PCM to the same whisper
+  transcriber. Invisibility already maps to `WDA_EXCLUDEFROMCAPTURE` on Windows.
+  Boot-tested headless under Electron. Later: VAD/streaming, mic+system mix,
+  packaging/signing.
 - [x] **M5 — Screen OCR.** `desktopCapturer` grabs the primary display (our
   own overlay is excluded via content protection), tesseract.js OCRs it on
   device, and the text is fed to the LLM as `[On screen]` context. Triggered by

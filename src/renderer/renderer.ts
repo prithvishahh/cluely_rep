@@ -1,10 +1,14 @@
 import type { CluelyApi } from "../main/preload";
+import { startLoopbackCapture } from "./capture";
 
 declare global {
   interface Window {
     cluely: CluelyApi;
   }
 }
+
+// Windows: begin loopback audio capture when main signals readiness.
+window.cluely.onStartCapture(() => void startLoopbackCapture());
 
 const answerEl = document.getElementById("answer") as HTMLElement;
 const promptEl = document.getElementById("prompt") as HTMLInputElement;

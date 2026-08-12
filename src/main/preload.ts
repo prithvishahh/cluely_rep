@@ -74,6 +74,16 @@ const api = {
     ipcRenderer.on("audio:status", (_e, s) => cb(s));
   },
 
+  /** (Windows) Main asks the renderer to start capturing loopback audio. */
+  onStartCapture: (cb: () => void) => {
+    ipcRenderer.on("audio:capture-start", cb);
+  },
+
+  /** (Windows) Send captured PCM (16 kHz mono 16-bit) to the transcriber. */
+  sendAudioPcm: (pcm: ArrayBuffer) => {
+    ipcRenderer.send("audio:pcm", pcm);
+  },
+
   /** Knowledge grounding: uploaded reference docs. */
   knowledge: {
     list: (): Promise<string[]> => ipcRenderer.invoke("knowledge:list"),

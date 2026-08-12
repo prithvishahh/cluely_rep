@@ -8,7 +8,13 @@ This is a learning/side project. It is built in the open to understand the
 engineering behind the product (audio capture, streaming transcription, screen
 OCR, low-latency LLM answers, and OS-level window exclusion).
 
-> **Status: Milestone 6 — actions + knowledge grounding.**
+> **Status: Milestone 4 — cross-platform (Windows + macOS).**
+> Runs on both OSes. On Windows the invisibility works out of the box and system
+> audio is captured natively by Electron (loopback) with no extra build. On top
+> of: actions + knowledge grounding (M6), screen OCR (M5), transcription (M3),
+> local LLM answers (M2).
+>
+> _(historical:)_ **Milestone 6 — actions + knowledge grounding.**
 > One-tap actions (Say next, Follow-ups, Fact-check, Who, Recap, Explain screen)
 > and uploadable reference docs (résumé/PDF/text) that ground every answer — on
 > top of live transcription (M3), screen OCR (M5), and local LLM answers (M2).
@@ -38,8 +44,9 @@ OCR, low-latency LLM answers, and OS-level window exclusion).
 
 ## Run it
 
-Requires Node 18+. **The invisibility only takes effect on macOS and Windows**
-(it's a no-op on Linux), so test the screen-share behaviour on a Mac.
+Requires Node 18+. Runs on **macOS and Windows** (invisibility is a no-op on
+Linux). Everything except system-audio transcription works out of the box on
+both; transcription setup differs per platform (see below).
 
 The answer layer uses a **local model via [Ollama](https://ollama.com)**. Install
 it, then pull a small model once:
@@ -65,37 +72,46 @@ Configure via env vars if you like:
 If Ollama isn't running or the model isn't pulled, the overlay shows the exact
 command to fix it.
 
-### Live transcription (macOS, optional)
+### Live transcription (optional)
 
-To have the overlay hear the meeting, build the native audio helper and point
-it at a local whisper.cpp model. **Without these steps the app still runs** —
-the header dot stays grey and transcription is simply off.
+To have the overlay hear the meeting you need whisper.cpp + a model. **Without
+this the app still runs** — the header dot stays grey and transcription is off.
+The **audio source** is captured differently per OS, but both feed the same
+whisper transcriber:
 
-1. **Build the ScreenCaptureKit audio helper** (macOS 13+, Xcode CLT):
-   ```bash
-   ./scripts/build-native.sh
-   ```
-   First run prompts for **Screen Recording** permission — grant it and restart.
+- **Windows** — system (loopback) audio is captured by the app itself via
+  `getDisplayMedia` (`audio: 'loopback'`). **No native build, no extra driver.**
+- **macOS** — a native ScreenCaptureKit helper captures system audio; build it
+  once with `./scripts/build-native.sh` (macOS 13+, Xcode CLT). First run
+  prompts for **Screen Recording** permission.
 
-2. **Build whisper.cpp and download a model:**
-   ```bash
-   git clone https://github.com/ggerganov/whisper.cpp && cd whisper.cpp
-   cmake -B build && cmake --build build -j --config Release
-   ./models/download-ggml-model.sh base.en
-   ```
+**Get whisper.cpp + a model:**
 
-3. **Point the app at them** (e.g. in your shell before `npm start`):
-   ```bash
-   export WHISPER_CLI=/path/to/whisper.cpp/build/bin/whisper-cli
-   export WHISPER_MODEL=/path/to/whisper.cpp/models/ggml-base.en.bin
-   ```
+- Windows: download a prebuilt release from
+  [whisper.cpp releases](https://github.com/ggerganov/whisper.cpp/releases)
+  (contains `whisper-cli.exe`) and a `ggml-base.en.bin` model — no compiling.
+- macOS/Linux: `git clone` whisper.cpp, `cmake -B build && cmake --build build`,
+  then `./models/download-ggml-model.sh base.en`.
 
-   | Var | Default | Meaning |
-   |---|---|---|
-   | `WHISPER_CLI` | `whisper-cli` (PATH) | whisper.cpp CLI binary |
-   | `WHISPER_MODEL` | *(unset)* | path to a ggml `.bin` model |
-   | `AUDIOCAP_BIN` | `native/audiocap/audiocap` | audio helper binary |
-   | `CLUELY_STT_WINDOW_MS` | `5000` | transcription window size |
+**Point the app at them** before `npm start`:
+
+```bash
+# macOS/Linux
+export WHISPER_CLI=/path/to/whisper-cli
+export WHISPER_MODEL=/path/to/ggml-base.en.bin
+```
+```powershell
+# Windows (PowerShell)
+$env:WHISPER_CLI="C:\path\to\whisper-cli.exe"
+$env:WHISPER_MODEL="C:\path\to\ggml-base.en.bin"
+```
+
+| Var | Default | Meaning |
+|---|---|---|
+| `WHISPER_CLI` | `whisper-cli` (PATH) | whisper.cpp CLI binary |
+| `WHISPER_MODEL` | *(unset)* | path to a ggml `.bin` model |
+| `AUDIOCAP_BIN` | `native/audiocap/audiocap` | macOS audio helper binary |
+| `CLUELY_STT_WINDOW_MS` | `5000` | transcription window size |
 
 The header dot turns **green** when transcription is live; hover it for status.
 
