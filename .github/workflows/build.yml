@@ -1,0 +1,74 @@
+name: build
+
+# Builds the double-clickable apps on GitHub's runners so nobody needs git,
+# Node, or npm locally — just download the result.
+#
+#   - Every push to the dev branch (and manual runs) uploads build artifacts and
+#     refreshes a "rolling" prerelease with the latest Windows app.
+#   - Pushing a version tag (v1.2.3) publishes a normal release with Win + macOS
+#     installers attached.
+
+on:
+  push:
+    branches: [claude/cluely-research-y76wxw]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:win
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CluelyRep-Windows
+          path: |
+            release/*.exe
+      - name: Refresh rolling prerelease
+        if: github.ref == 'refs/heads/claude/cluely-research-y76wxw'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rolling
+          name: Latest build (Windows)
+          prerelease: true
+          files: release/*.exe
+      - name: Attach to tagged release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.exe
+
+  macos:
+    runs-on: macos-latest
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: false # no signing cert in CI
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build native audio helper
+        run: bash scripts/build-native.sh
+      - run: npm run dist:mac
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CluelyRep-macOS
+          path: release/*.dmg
+      - name: Attach to tagged release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.dmg

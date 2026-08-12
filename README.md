@@ -43,7 +43,19 @@ OCR, low-latency LLM answers, and OS-level window exclusion).
 > Planned pivot: once the demo works end-to-end, rewrite fully native
 > (Swift on macOS) for latency and footprint. Tracked in the roadmap.
 
-## Install as an app (build once, then just click)
+## Download the app (no tools needed)
+
+GitHub builds the apps automatically. Grab the latest Windows build from the
+[**Releases**](https://github.com/prithvishahh/cluely_rep/releases) page (the
+"Latest build (Windows)" prerelease) — download the `.exe` and run it. No git,
+Node, or npm required.
+
+> You still need [Ollama](https://ollama.com) installed and running for AI
+> answers (it's the local model backend). On first launch Windows SmartScreen
+> may warn "unknown publisher" — click **More info › Run anyway** (the app isn't
+> code-signed yet).
+
+## Build it yourself (build once, then just click)
 
 To get a real double-clickable app instead of running from a terminal, build an
 installer once. You need Node 18+ and the repo cloned. **Build on the OS you
