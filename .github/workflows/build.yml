@@ -26,7 +26,15 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      - name: Install deps (retry on flaky downloads)
+        shell: bash
+        run: |
+          n=0
+          until npm ci; do
+            n=$((n+1))
+            if [ "$n" -ge 3 ]; then echo "npm ci failed after $n attempts"; exit 1; fi
+            echo "npm ci failed (attempt $n) — retrying in 15s…"; sleep 15
+          done
       - run: npm run dist:win
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -58,7 +66,15 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      - name: Install deps (retry on flaky downloads)
+        shell: bash
+        run: |
+          n=0
+          until npm ci; do
+            n=$((n+1))
+            if [ "$n" -ge 3 ]; then echo "npm ci failed after $n attempts"; exit 1; fi
+            echo "npm ci failed (attempt $n) — retrying in 15s…"; sleep 15
+          done
       - name: Build native audio helper
         # Optional: the app degrades gracefully (transcription off) without it,
         # so a compile issue here must not block the .dmg.
