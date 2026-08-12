@@ -15,8 +15,9 @@ const api = {
   /** Host platform, e.g. "darwin" | "win32" | "linux". */
   platform: process.platform,
 
-  /** Toggle whether the overlay captures the mouse (hover-based pass-through). */
-  setInteractive: (on: boolean) => ipcRenderer.send("overlay:interactive", on),
+  /** Resize the overlay window to fit the visible UI (keeps it tiny). */
+  resize: (width: number, height: number) =>
+    ipcRenderer.send("overlay:resize", { width, height }),
 
   /** Give the overlay keyboard focus so the user can type. */
   focusOverlay: () => ipcRenderer.send("overlay:focus"),

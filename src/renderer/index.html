@@ -8,51 +8,48 @@
   </head>
   <body>
     <div id="root">
-      <!-- The always-visible top bar (centered pill). -->
+      <!-- Top pill bar -->
       <div class="bar interactive" id="bar">
+        <span class="logo" id="logo">✦</span>
         <button class="seg listen" id="listenBtn">
           <span class="dot" id="audioDot"></span>
           <span id="listenLabel">Listen</span>
           <span class="timer" id="timer" hidden>00:00</span>
         </button>
-
-        <span class="divider"></span>
-
         <button class="seg primary" id="askBtn">
           Ask AI <span class="keys" data-keys="mod,↵"></span>
         </button>
-
-        <button class="seg" id="screenBtn">
-          Screen <span class="keys" data-keys="mod,⇧,↵"></span>
-        </button>
-
-        <span class="divider"></span>
-
-        <button class="seg icon" id="kbBtn" title="Add reference material (résumé, docs)">
-          📎<span class="badge" id="kbCount" hidden>0</span>
-        </button>
-
-        <button class="seg" id="hideBtn">
-          Hide <span class="keys" data-keys="mod,\"></span>
-        </button>
+        <button class="seg ghost" id="hideBtn">Hide <span class="chev">⌄</span></button>
       </div>
 
-      <!-- The response panel drops down below the bar when active. -->
+      <!-- Response panel -->
       <div class="panel interactive" id="panel" hidden>
+        <div class="qbubble" id="qbubble" hidden></div>
+
+        <div class="answer" id="answer">
+          <div class="placeholder">Ask anything, or press the shortcut for Assist.</div>
+        </div>
+
+        <div class="transcript" id="transcript" hidden></div>
+
         <nav class="actions" id="actions"></nav>
-        <section class="transcript" id="transcript" hidden></section>
-        <main class="answer" id="answer">
-          <div class="placeholder">Ask anything, or press the shortcut.</div>
-        </main>
-        <div class="input-row">
-          <input
-            id="prompt"
-            type="text"
-            placeholder="Ask a follow-up…"
-            autocomplete="off"
-            spellcheck="false"
-          />
-          <button id="send" class="send" title="Ask">↵</button>
+
+        <div class="composer">
+          <div class="composer-input">
+            <input
+              id="prompt"
+              type="text"
+              placeholder="Ask about your screen or conversation"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <div class="composer-tools">
+              <button class="smart" id="kbBtn" title="Add reference material (résumé, docs)">
+                📎 Knowledge<span class="badge" id="kbCount" hidden>0</span>
+              </button>
+            </div>
+          </div>
+          <button class="send" id="send" title="Ask">➤</button>
         </div>
       </div>
     </div>

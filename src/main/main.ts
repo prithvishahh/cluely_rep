@@ -57,10 +57,10 @@ function createOverlay(): void {
   const primary = screen.getPrimaryDisplay();
   const area = primary.workArea;
 
-  // A wide, short window centered at the top of the screen. It's mostly
-  // transparent — just the centered bar (and the panel that drops below it).
-  const winWidth = 780;
-  const winHeight = 640;
+  // Small window centered at the top; the renderer resizes it to fit its
+  // content (bar, or bar + panel). Kept tight so it never covers the meeting.
+  const winWidth = 360;
+  const winHeight = 70;
 
   overlay = new BrowserWindow({
     width: winWidth,
@@ -71,7 +71,7 @@ function createOverlay(): void {
     frame: false,
     transparent: true,
     hasShadow: false,
-    resizable: false,
+    resizable: true,
     movable: true,
     skipTaskbar: true,
     focusable: true,
@@ -94,11 +94,6 @@ function createOverlay(): void {
   // Float above fullscreen apps (meetings are often fullscreen) and every space.
   overlay.setAlwaysOnTop(true, "screen-saver");
   overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-
-  // Pass the mouse through by default; the renderer flips this on when the
-  // pointer is over the bar/panel, so the overlay never blocks the app behind
-  // it but is still fully clickable where it matters.
-  overlay.setIgnoreMouseEvents(true, { forward: true });
 
   overlay.loadFile(path.join(__dirname, "index.html"));
 
@@ -207,9 +202,19 @@ ipcMain.on("audio:pcm", (_evt, chunk: ArrayBuffer) => {
 });
 
 // ── Overlay window controls. ─────────────────────────────────────────────
-// Renderer flips mouse capture on/off based on whether the pointer is over UI.
-ipcMain.on("overlay:interactive", (_evt, on: boolean) => {
-  overlay?.setIgnoreMouseEvents(!on, { forward: true });
+// The renderer measures its content and asks us to resize; we keep the window
+// centered at the top of the screen. Small window == never blocks the meeting.
+ipcMain.on("overlay:resize", (_evt, size: { width: number; height: number }) => {
+  if (!overlay) return;
+  const area = screen.getPrimaryDisplay().workArea;
+  const width = Math.max(200, Math.min(Math.round(size.width), area.width));
+  const height = Math.max(48, Math.min(Math.round(size.height), area.height - 16));
+  overlay.setBounds({
+    x: Math.round(area.x + (area.width - width) / 2),
+    y: area.y + 6,
+    width,
+    height,
+  });
 });
 
 ipcMain.on("overlay:focus", () => {

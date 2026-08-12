@@ -1,11 +1,12 @@
 :root {
-  --bar-bg: rgba(20, 20, 24, 0.9);
-  --panel-bg: rgba(18, 18, 22, 0.92);
-  --fg: #f2f2f5;
-  --muted: #9b9ba3;
-  --accent: #6aa6ff;
-  --border: rgba(255, 255, 255, 0.1);
+  --bar-bg: rgba(30, 30, 32, 0.96);
+  --panel-bg: rgba(28, 28, 30, 0.97);
+  --fg: #ededed;
+  --muted: #8e8e93;
+  --accent: #2f6bff;
+  --border: rgba(255, 255, 255, 0.09);
   --hover: rgba(255, 255, 255, 0.08);
+  --chip: rgba(255, 255, 255, 0.06);
   font-family: -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
 }
 
@@ -22,49 +23,45 @@ body {
   user-select: none;
 }
 
-/* The window is transparent; the root passes clicks through except over the
-   interactive UI (the main process toggles mouse-ignore based on hover). */
 #root {
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100vh;
-  padding-top: 8px;
-  pointer-events: none;
+  padding-top: 6px;
 }
 
-.interactive {
-  pointer-events: auto;
-}
-
-/* ── Top bar (the centered pill) ─────────────────────────────────────── */
+/* ── Top pill bar ────────────────────────────────────────────────────── */
 .bar {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 5px 7px;
+  gap: 4px;
+  padding: 5px 6px 5px 10px;
   background: var(--bar-bg);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  border-radius: 999px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(24px) saturate(150%);
   -webkit-backdrop-filter: blur(24px) saturate(150%);
-  -webkit-app-region: drag; /* drag the bar to move the overlay */
   color: var(--fg);
 }
 
+.logo {
+  font-size: 14px;
+  color: #cdd6ff;
+  padding-right: 2px;
+}
+
 .seg {
-  -webkit-app-region: no-drag;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  height: 32px;
-  padding: 0 11px;
+  height: 30px;
+  padding: 0 12px;
   border: none;
-  border-radius: 9px;
+  border-radius: 999px;
   background: transparent;
   color: var(--fg);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -82,16 +79,13 @@ body {
   background: rgba(255, 255, 255, 0.16);
 }
 
-.seg.icon {
-  padding: 0 10px;
-  font-size: 14px;
+.seg.ghost {
+  color: var(--muted);
 }
 
-.divider {
-  width: 1px;
-  height: 20px;
-  margin: 0 3px;
-  background: var(--border);
+.chev {
+  font-size: 11px;
+  margin-left: -2px;
 }
 
 .dot {
@@ -103,13 +97,13 @@ body {
 }
 
 .dot.live {
-  background: #56d364;
-  box-shadow: 0 0 8px #56d364;
+  background: #ff5f57;
+  box-shadow: 0 0 8px #ff5f57;
 }
 
 .timer {
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--muted);
 }
 
@@ -120,14 +114,166 @@ body {
 
 kbd {
   font-family: inherit;
-  font-size: 10.5px;
+  font-size: 10px;
   line-height: 1;
   padding: 3px 4px;
-  min-width: 16px;
+  min-width: 15px;
   text-align: center;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   color: var(--fg);
+}
+
+/* ── Response panel ──────────────────────────────────────────────────── */
+.panel {
+  width: 500px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  padding: 14px;
+  gap: 12px;
+}
+
+.qbubble {
+  align-self: flex-end;
+  max-width: 80%;
+  padding: 7px 13px;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.answer {
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--fg);
+  white-space: pre-wrap;
+}
+
+.answer .placeholder {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.answer.thinking {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.transcript {
+  max-height: 66px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.transcript .seg-line:last-child {
+  color: var(--fg);
+}
+
+/* ── Actions row (icon · icon · icon) ────────────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 2px;
+  color: var(--muted);
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.action:hover {
+  background: var(--hover);
+}
+
+.action .ico {
+  opacity: 0.85;
+}
+
+.sepdot {
+  color: var(--muted);
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+/* ── Composer ────────────────────────────────────────────────────────── */
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.composer-input {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+#prompt {
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  font-size: 13px;
+  outline: none;
+  width: 100%;
+}
+
+#prompt::placeholder {
+  color: var(--muted);
+}
+
+.composer-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.smart {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--chip);
+  color: var(--fg);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.smart:hover {
+  border-color: var(--accent);
 }
 
 .badge {
@@ -136,132 +282,29 @@ kbd {
   padding: 0 4px;
   border-radius: 999px;
   background: var(--accent);
-  color: #08122a;
+  color: #fff;
   font-size: 10px;
   font-weight: 700;
   text-align: center;
 }
 
-/* ── Response panel ──────────────────────────────────────────────────── */
-.panel {
-  width: 460px;
-  max-width: 92vw;
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - 90px);
-  background: var(--panel-bg);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  overflow: hidden;
-}
-
-.actions {
-  display: flex;
-  gap: 6px;
-  padding: 10px 12px;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--border);
-  scrollbar-width: none;
-}
-
-.actions::-webkit-scrollbar {
-  display: none;
-}
-
-.chip {
-  flex: 0 0 auto;
-  padding: 5px 11px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--fg);
-  font-size: 11.5px;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.chip:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.transcript {
-  max-height: 76px;
-  overflow-y: auto;
-  padding: 8px 14px;
-  font-size: 11.5px;
-  line-height: 1.45;
-  color: var(--muted);
-  border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.transcript .seg-line {
-  opacity: 0.7;
-}
-
-.transcript .seg-line:last-child {
-  opacity: 1;
-  color: var(--fg);
-}
-
-.answer {
-  flex: 1;
-  overflow-y: auto;
-  padding: 14px;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: var(--fg);
-  white-space: pre-wrap;
-  min-height: 56px;
-}
-
-.answer .placeholder {
-  color: var(--muted);
-  font-size: 12.5px;
-}
-
-.answer.thinking {
-  color: var(--muted);
-  font-style: italic;
-}
-
-.input-row {
-  display: flex;
-  gap: 8px;
-  padding: 10px;
-  border-top: 1px solid var(--border);
-}
-
-#prompt {
-  flex: 1;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--fg);
-  font-size: 13px;
-  outline: none;
-}
-
-#prompt:focus {
-  border-color: var(--accent);
-}
-
 .send {
+  flex: 0 0 auto;
   width: 40px;
-  border-radius: 10px;
+  height: 40px;
+  border-radius: 50%;
   border: none;
   background: var(--accent);
-  color: #08122a;
+  color: #fff;
   font-size: 15px;
-  font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.send:hover {
+  filter: brightness(1.08);
 }
 
 .send:active {

@@ -160,10 +160,10 @@ The header dot turns **green** when transcription is live; hover it for status.
 
 ## Shortcuts
 
-The overlay is a small **bar centered at the top of the screen**. It passes your
-mouse through by default (so it never blocks the app behind it) and becomes
-clickable automatically when you move the pointer over it. Drag the bar to
-reposition it.
+The overlay is a small **pill bar centered at the top of the screen**. The
+window is sized exactly to the visible UI, so it's directly clickable and never
+covers the app behind it. Click **Ask AI** (or press the shortcut) to open the
+response panel and type.
 
 | Shortcut | Action |
 |---|---|
