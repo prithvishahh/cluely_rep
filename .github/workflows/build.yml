@@ -60,6 +60,9 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Build native audio helper
+        # Optional: the app degrades gracefully (transcription off) without it,
+        # so a compile issue here must not block the .dmg.
+        continue-on-error: true
         run: bash scripts/build-native.sh
       - run: npm run dist:mac
       - name: Upload artifact

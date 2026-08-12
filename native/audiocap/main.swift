@@ -63,11 +63,24 @@ final class Capturer: NSObject, SCStreamOutput, SCStreamDelegate {
     ) {
         guard type == .audio, sampleBuffer.isValid else { return }
 
-        // ScreenCaptureKit delivers float32 samples. Pull them out and convert
-        // to interleaved int16, then write raw bytes to stdout.
-        guard let list = try? sampleBuffer.audioBufferList() else { return }
-        let buffers = UnsafeMutableAudioBufferListPointer(list.unsafePointer)
+        // ScreenCaptureKit delivers float32 samples. Get a mutable pointer to
+        // the sample buffer's AudioBufferList, convert to interleaved int16,
+        // and write raw bytes to stdout. The retained block buffer must stay
+        // alive while we read from it.
+        var abl = AudioBufferList()
+        var blockBuffer: CMBlockBuffer?
+        let status = CMSampleBufferGetAudioBufferListWithRetainedBlockBuffer(
+            sampleBuffer,
+            bufferListSizeNeededOut: nil,
+            bufferListOut: &abl,
+            bufferListSize: MemoryLayout<AudioBufferList>.size,
+            blockBufferAllocator: nil,
+            blockBufferMemoryAllocator: nil,
+            flags: kCMSampleBufferFlag_AudioBufferList_Assure16ByteAlignment,
+            blockBufferOut: &blockBuffer)
+        guard status == noErr else { return }
 
+        let buffers = UnsafeMutableAudioBufferListPointer(&abl)
         // Mono config => one buffer of float32 samples.
         guard let ch = buffers.first,
               let src = ch.mData?.assumingMemoryBound(to: Float32.self)
@@ -81,30 +94,13 @@ final class Capturer: NSObject, SCStreamOutput, SCStreamDelegate {
             withUnsafeBytes(of: s.littleEndian) { out.append(contentsOf: $0) }
         }
         FileHandle.standardOutput.write(out)
+
+        _ = blockBuffer // keep the block buffer alive through the read above
     }
 
     func stream(_ stream: SCStream, didStopWithError error: Error) {
         log("audiocap: stream stopped: \(error)")
         exit(1)
-    }
-}
-
-// CMSampleBuffer -> AudioBufferList helper.
-extension CMSampleBuffer {
-    func audioBufferList() throws -> AudioBufferList {
-        var abl = AudioBufferList()
-        var block: CMBlockBuffer?
-        let status = CMSampleBufferGetAudioBufferListWithRetainedBlockBuffer(
-            self,
-            bufferListSizeNeededOut: nil,
-            bufferListOut: &abl,
-            bufferListSize: MemoryLayout<AudioBufferList>.size,
-            blockBufferAllocator: nil,
-            blockBufferMemoryAllocator: nil,
-            flags: kCMSampleBufferFlag_AudioBufferList_Assure16ByteAlignment,
-            blockBufferOut: &block)
-        guard status == noErr else { throw NSError(domain: "audiocap", code: Int(status)) }
-        return abl
     }
 }
 
