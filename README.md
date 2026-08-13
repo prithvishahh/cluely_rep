@@ -27,10 +27,15 @@ OCR, low-latency LLM answers, and OS-level window exclusion).
 
 - **Invisible overlay** — excluded from screen-share capture (`setContentProtection`).
 - **Local LLM answers** — streamed from Ollama; nothing leaves the machine.
-- **Live transcription** — native ScreenCaptureKit system audio → whisper.cpp.
+- **Multi-turn chat** — a conversation thread with follow-up context, Markdown
+  formatting, per-answer **Copy**, and **New chat** to reset.
+- **Live transcription** — system audio → whisper.cpp, with a **Listen** toggle
+  to pause/resume.
 - **Screen OCR** — reads the screen and answers using it.
-- **One-tap actions** — Say next · Follow-ups · Fact-check · Who · Recap · Explain screen.
+- **One-tap actions** — Assist · What should I say? · Follow-ups · Fact-check ·
+  Who · Recap.
 - **Knowledge grounding** — upload a résumé / docs (PDF or text); answers use them.
+- **Draggable** pill bar; platform-aware shortcuts (⌘ on macOS, Ctrl on Windows).
 
 ## Stack (current)
 
@@ -45,10 +50,12 @@ OCR, low-latency LLM answers, and OS-level window exclusion).
 
 ## Download the app (no tools needed)
 
-GitHub builds the apps automatically. Grab the latest Windows build from the
+GitHub builds the apps automatically. Grab the latest build from the
 [**Releases**](https://github.com/prithvishahh/cluely_rep/releases) page (the
-"Latest build (Windows)" prerelease) — download the `.exe` and run it. No git,
-Node, or npm required.
+"Latest build" prerelease): the **`.exe`** for Windows or the **`.dmg`** for
+macOS — download and run. No git, Node, or npm required. (The download page
+doesn't auto-detect your OS — pick the file for your platform; the app itself
+adapts its shortcuts to macOS/Windows at runtime.)
 
 > You still need [Ollama](https://ollama.com) installed and running for AI
 > answers (it's the local model backend). On first launch Windows SmartScreen

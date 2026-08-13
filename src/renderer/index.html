@@ -8,7 +8,7 @@
   </head>
   <body>
     <div id="root">
-      <!-- Top pill bar -->
+      <!-- Top pill bar (draggable) -->
       <div class="bar interactive" id="bar">
         <span class="logo" id="logo">✦</span>
         <button class="seg listen" id="listenBtn">
@@ -24,10 +24,15 @@
 
       <!-- Response panel -->
       <div class="panel interactive" id="panel" hidden>
-        <div class="qbubble" id="qbubble" hidden></div>
+        <div class="panel-head">
+          <span class="phead-title">Assistant</span>
+          <button class="newchat" id="newBtn" title="Start a new conversation">＋ New</button>
+        </div>
 
-        <div class="answer" id="answer">
-          <div class="placeholder">Ask anything, or press the shortcut for Assist.</div>
+        <div class="thread" id="thread">
+          <div class="placeholder" id="placeholder">
+            Ask anything, or press the shortcut for Assist.
+          </div>
         </div>
 
         <div class="transcript" id="transcript" hidden></div>

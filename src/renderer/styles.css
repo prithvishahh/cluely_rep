@@ -30,7 +30,7 @@ body {
   padding-top: 6px;
 }
 
-/* ── Top pill bar ────────────────────────────────────────────────────── */
+/* ── Top pill bar (draggable) ────────────────────────────────────────── */
 .bar {
   display: flex;
   align-items: center;
@@ -43,6 +43,7 @@ body {
   backdrop-filter: blur(24px) saturate(150%);
   -webkit-backdrop-filter: blur(24px) saturate(150%);
   color: var(--fg);
+  -webkit-app-region: drag;
 }
 
 .logo {
@@ -52,6 +53,7 @@ body {
 }
 
 .seg {
+  -webkit-app-region: no-drag;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -136,13 +138,60 @@ kbd {
   box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(24px) saturate(150%);
   -webkit-backdrop-filter: blur(24px) saturate(150%);
-  padding: 14px;
+  padding: 12px 14px 14px;
+  gap: 10px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.phead-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.newchat {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--chip);
+  color: var(--fg);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.newchat:hover {
+  border-color: var(--accent);
+}
+
+/* ── Thread ──────────────────────────────────────────────────────────── */
+.thread {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.thread .placeholder {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 6px 0;
+}
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .qbubble {
   align-self: flex-end;
-  max-width: 80%;
+  max-width: 82%;
   padding: 7px 13px;
   border-radius: 14px;
   background: var(--accent);
@@ -152,26 +201,81 @@ kbd {
 }
 
 .answer {
-  max-height: 300px;
-  overflow-y: auto;
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.md {
   font-size: 13.5px;
   line-height: 1.55;
   color: var(--fg);
-  white-space: pre-wrap;
 }
 
-.answer .placeholder {
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.answer.thinking {
+.md.thinking {
   color: var(--muted);
   font-style: italic;
 }
 
+.md p {
+  margin: 0 0 8px;
+}
+.md p:last-child {
+  margin-bottom: 0;
+}
+.md ul,
+.md ol {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+}
+.md li {
+  margin: 2px 0;
+}
+.md h1,
+.md h2,
+.md h3 {
+  font-size: 14px;
+  margin: 6px 0 4px;
+}
+.md code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.09);
+}
+.md pre {
+  margin: 6px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  overflow-x: auto;
+}
+.md pre code {
+  background: none;
+  padding: 0;
+}
+.md a {
+  color: #7fb0ff;
+}
+
+.copy {
+  margin-top: 6px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+.copy:hover {
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
+/* ── Transcript ──────────────────────────────────────────────────────── */
 .transcript {
-  max-height: 66px;
+  max-height: 62px;
   overflow-y: auto;
   padding: 8px 10px;
   border-radius: 10px;
@@ -180,12 +284,11 @@ kbd {
   line-height: 1.45;
   color: var(--muted);
 }
-
 .transcript .seg-line:last-child {
   color: var(--fg);
 }
 
-/* ── Actions row (icon · icon · icon) ────────────────────────────────── */
+/* ── Actions row ─────────────────────────────────────────────────────── */
 .actions {
   display: flex;
   align-items: center;
@@ -207,15 +310,12 @@ kbd {
   cursor: pointer;
   white-space: nowrap;
 }
-
 .action:hover {
   background: var(--hover);
 }
-
 .action .ico {
   opacity: 0.85;
 }
-
 .sepdot {
   color: var(--muted);
   opacity: 0.5;
@@ -248,7 +348,6 @@ kbd {
   outline: none;
   width: 100%;
 }
-
 #prompt::placeholder {
   color: var(--muted);
 }
@@ -279,7 +378,6 @@ kbd {
   font-size: 11.5px;
   cursor: pointer;
 }
-
 .smart:hover {
   border-color: var(--accent);
 }
@@ -310,11 +408,9 @@ kbd {
   align-items: center;
   justify-content: center;
 }
-
 .send:hover {
   filter: brightness(1.08);
 }
-
 .send:active {
   transform: translateY(1px);
 }

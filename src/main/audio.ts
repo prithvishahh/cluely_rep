@@ -33,6 +33,15 @@ export interface PipelineHandlers {
 }
 
 let transcriber: Transcriber | null = null;
+let paused = false;
+
+/** Pause/resume transcription without tearing down capture. */
+export function setPaused(p: boolean): void {
+  paused = p;
+}
+export function isPaused(): boolean {
+  return paused;
+}
 
 function macHelperAvailable(): { ok: boolean; reason?: string } {
   if (!existsSync(AUDIOCAP_BIN)) {
@@ -63,6 +72,7 @@ export function needsRendererCapture(): boolean {
 
 /** Feed PCM (16 kHz mono 16-bit) captured by the renderer into the transcriber. */
 export function pushRendererPcm(pcm: Buffer): void {
+  if (paused) return;
   transcriber?.push(pcm);
 }
 
@@ -99,7 +109,9 @@ export function startAudioPipeline(handlers: PipelineHandlers): () => void {
     return () => {};
   }
 
-  proc.stdout?.on("data", (buf: Buffer) => transcriber?.push(buf));
+  proc.stdout?.on("data", (buf: Buffer) => {
+    if (!paused) transcriber?.push(buf);
+  });
   proc.stderr?.on("data", (buf: Buffer) => {
     const line = buf.toString().trim();
     if (line) console.error("[audiocap]", line);

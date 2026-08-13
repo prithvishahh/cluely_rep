@@ -102,6 +102,14 @@ jobs:
         with:
           name: CluelyRep-macOS
           path: release/*.dmg
+      - name: Refresh rolling prerelease
+        if: github.ref == 'refs/heads/claude/cluely-research-y76wxw'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rolling
+          name: Latest build
+          prerelease: true
+          files: release/*.dmg
       - name: Attach to tagged release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2

@@ -9,10 +9,12 @@ import {
   session,
 } from "electron";
 import path from "node:path";
-import { streamAnswer } from "./llm";
+import { streamAnswer, type ChatMessage } from "./llm";
 import {
+  isPaused,
   needsRendererCapture,
   pushRendererPcm,
+  setPaused,
   startAudioPipeline,
   type PipelineStatus,
 } from "./audio";
@@ -30,6 +32,8 @@ const isDev = process.argv.includes("--dev");
 
 let overlay: BrowserWindow | null = null;
 let stopAudio: (() => void) | null = null;
+// Once the user drags the bar, stop auto-centering on resize.
+let userMoved = false;
 
 // ── Rolling transcript. ──────────────────────────────────────────────────
 // Keeps the most recent speech so the LLM can answer "in context" of the call.
@@ -119,6 +123,11 @@ function createOverlay(): void {
     if (needsRendererCapture()) overlay?.webContents.send("audio:capture-start");
   });
 
+  // If the user drags the bar, remember it so resizes don't re-center.
+  overlay.on("moved", () => {
+    userMoved = true;
+  });
+
   overlay.on("closed", () => {
     stopAudio?.();
     stopAudio = null;
@@ -153,10 +162,13 @@ function registerShortcuts(): void {
   });
 }
 
-// ── Answer layer (Milestone 2). ──────────────────────────────────────────
+// ── Answer layer. ─────────────────────────────────────────────────────────
 // Streams tokens from a local model. Each request carries an id so the
-// renderer can correlate tokens and cancel in-flight generations.
+// renderer can correlate tokens and cancel in-flight generations. A rolling
+// chat history enables multi-turn follow-ups.
 const inflight = new Map<string, AbortController>();
+const CHAT_HISTORY_MAX = 8; // messages (user/assistant), not turns
+let chatHistory: ChatMessage[] = [];
 
 ipcMain.on(
   "llm:ask",
@@ -176,15 +188,24 @@ ipcMain.on(
       }
     }
 
+    let answer = "";
     try {
       for await (const token of streamAnswer(prompt, {
         signal: controller.signal,
         transcript,
         screen: screenText,
         knowledge: contextText(),
+        history: chatHistory,
       })) {
         if (evt.sender.isDestroyed()) break;
+        answer += token;
         evt.sender.send("llm:token", { id, token });
+      }
+      // Record the turn (plain prompt + answer) for follow-up context.
+      chatHistory.push({ role: "user", content: prompt });
+      chatHistory.push({ role: "assistant", content: answer });
+      if (chatHistory.length > CHAT_HISTORY_MAX) {
+        chatHistory = chatHistory.slice(-CHAT_HISTORY_MAX);
       }
       if (!evt.sender.isDestroyed()) evt.sender.send("llm:done", { id });
     } catch (err) {
@@ -203,6 +224,11 @@ ipcMain.on("llm:cancel", (_evt, req: { id: string }) => {
   inflight.delete(req.id);
 });
 
+// Start a fresh conversation (clear multi-turn history).
+ipcMain.on("chat:reset", () => {
+  chatHistory = [];
+});
+
 // Windows loopback audio streamed from the renderer (16 kHz mono 16-bit PCM).
 ipcMain.on("audio:pcm", (_evt, chunk: ArrayBuffer) => {
   pushRendererPcm(Buffer.from(chunk));
@@ -216,12 +242,18 @@ ipcMain.on("overlay:resize", (_evt, size: { width: number; height: number }) => 
   const area = screen.getPrimaryDisplay().workArea;
   const width = Math.max(200, Math.min(Math.round(size.width), area.width));
   const height = Math.max(48, Math.min(Math.round(size.height), area.height - 16));
-  overlay.setBounds({
-    x: Math.round(area.x + (area.width - width) / 2),
-    y: area.y + 6,
-    width,
-    height,
-  });
+  if (userMoved) {
+    // Keep the user's chosen position; only change the size.
+    const [x, y] = overlay.getPosition();
+    overlay.setBounds({ x, y, width, height });
+  } else {
+    overlay.setBounds({
+      x: Math.round(area.x + (area.width - width) / 2),
+      y: area.y + 6,
+      width,
+      height,
+    });
+  }
 });
 
 ipcMain.on("overlay:focus", () => {
@@ -232,6 +264,16 @@ ipcMain.on("overlay:toggle-hidden", () => {
   if (!overlay) return;
   if (overlay.isVisible()) overlay.hide();
   else overlay.showInactive();
+});
+
+// Manually pause/resume live transcription (the Listen toggle).
+ipcMain.on("audio:toggle", () => {
+  const nowPaused = !isPaused();
+  setPaused(nowPaused);
+  sendAudioStatus({
+    active: !nowPaused,
+    reason: nowPaused ? "paused" : undefined,
+  });
 });
 
 // ── Knowledge grounding (Milestone 6). ──────────────────────────────────

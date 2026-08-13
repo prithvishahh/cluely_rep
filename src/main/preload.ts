@@ -29,6 +29,12 @@ const api = {
   /** Show / hide the whole overlay. */
   toggleHidden: () => ipcRenderer.send("overlay:toggle-hidden"),
 
+  /** Start a fresh conversation (clears multi-turn history). */
+  newChat: () => ipcRenderer.send("chat:reset"),
+
+  /** Pause / resume live transcription (the Listen toggle). */
+  toggleListen: () => ipcRenderer.send("audio:toggle"),
+
   /**
    * Ask the model a question. Tokens stream to `onToken`. Returns a cancel
    * function that aborts the generation and detaches listeners. Set
